@@ -129,13 +129,6 @@ public class BackgroundLocationUpdateService
         // TODO Auto-generated method stub
         Log.i(TAG, "OnBind" + intent);
 
-        if (useActivityDetection) {
-          Log.d(TAG, "STARTING ACTIVITY DETECTION");
-          startDetectingActivities();
-        }
-
-        startRecording();
-
         return null;
     }
 
@@ -214,6 +207,13 @@ public class BackgroundLocationUpdateService
             notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR;
 
             startForeground(startId, notification);
+
+            if (useActivityDetection) {
+                Log.d(TAG, "STARTING ACTIVITY DETECTION");
+                startDetectingActivities();
+            }
+
+            startRecording();
         }
 
         // Log.i(TAG, "- url: " + url);
@@ -327,16 +327,20 @@ public class BackgroundLocationUpdateService
         Intent mIntent = new Intent(Constants.CALLBACK_ACTIVITY_UPDATE);
         mIntent.putExtra(Constants.ACTIVITY_EXTRA, detectedActivities);
         getApplicationContext().sendBroadcast(mIntent);
-        Log.w(TAG, "Activity is recording" + isRecording);
 
-        if(lastActivity.getType() == DetectedActivity.STILL && isRecording) {
-          Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
-          stopRecording();
+        if(lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() > 75 && isRecording) {
+            if (isDebugging) {
+                Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
+            }
+
+            stopRecording();
         } else if(lastActivity.getType() != DetectedActivity.STILL && !isRecording) {
-          Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
-          startRecording();
+            if (isDebugging) {
+                Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
+            }
+
+            startRecording();
         }
-        //else do nothing
       }
     };
 

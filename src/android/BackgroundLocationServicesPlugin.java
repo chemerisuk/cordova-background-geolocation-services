@@ -37,7 +37,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     public static final String ACTION_START = "start";
     public static final String ACTION_STOP = "stop";
     public static final String ACTION_CONFIGURE = "configure";
-    public static final String ACTION_SET_CONFIG = "setConfig";
     public static final String ACTION_AGGRESSIVE_TRACKING = "startAggressiveTracking";
     public static final String ACTION_GET_VERSION = "getVersion";
     public static final String ACTION_REGISTER_FOR_LOCATION_UPDATES = "registerForLocationUpdates";
@@ -174,34 +173,30 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
-
         Activity activity = this.cordova.getActivity();
 
-        Boolean result = false;
+        Boolean result = true;
+
         updateServiceIntent = new Intent(activity, BackgroundLocationUpdateService.class);
 
         if (ACTION_START.equalsIgnoreCase(action) && !isEnabled) {
-              result = true;
+            callbackContext.success();
+            updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
+            updateServiceIntent.putExtra("distanceFilter", distanceFilter);
+            updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
+            updateServiceIntent.putExtra("isDebugging", isDebugging);
+            updateServiceIntent.putExtra("notificationTitle", notificationTitle);
+            updateServiceIntent.putExtra("notificationText", notificationText);
+            updateServiceIntent.putExtra("interval", interval);
+            updateServiceIntent.putExtra("fastestInterval", fastestInterval);
+            updateServiceIntent.putExtra("aggressiveInterval", aggressiveInterval);
+            updateServiceIntent.putExtra("activitiesInterval", activitiesInterval);
+            updateServiceIntent.putExtra("useActivityDetection", useActivityDetection);
 
-              callbackContext.success();
-              updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
-              updateServiceIntent.putExtra("distanceFilter", distanceFilter);
-              updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
-              updateServiceIntent.putExtra("isDebugging", isDebugging);
-              updateServiceIntent.putExtra("notificationTitle", notificationTitle);
-              updateServiceIntent.putExtra("notificationText", notificationText);
-              updateServiceIntent.putExtra("interval", interval);
-              updateServiceIntent.putExtra("fastestInterval", fastestInterval);
-              updateServiceIntent.putExtra("aggressiveInterval", aggressiveInterval);
-              updateServiceIntent.putExtra("activitiesInterval", activitiesInterval);
-              updateServiceIntent.putExtra("useActivityDetection", useActivityDetection);
+            isServiceBound = bindServiceToWebview(activity, updateServiceIntent);
 
-              isServiceBound = bindServiceToWebview(activity, updateServiceIntent);
-
-              isEnabled = true;
+            isEnabled = true;
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
-            result = true;
-
             if (unbindServiceFromWebview(activity, updateServiceIntent)) {
                 isEnabled = false;
 
@@ -210,7 +205,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 callbackContext.error("Failed To Stop The Service");
             }
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
-            result = true;
             try {
                 // [distanceFilter, desiredAccuracy, interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, fences, url, params, headers]
                 //  0               1                2         3                4                   5      6                   7                8              9
@@ -232,22 +226,14 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 Log.d(TAG, "Json Exception" + e);
                 callbackContext.error("JSON Exception" + e.getMessage());
             }
-        } else if (ACTION_SET_CONFIG.equalsIgnoreCase(action)) {
-            result = true;
-            // TODO reconfigure Service
-            callbackContext.success();
         } else if(ACTION_GET_VERSION.equalsIgnoreCase(action)) {
             result = true;
             callbackContext.success(PLUGIN_VERSION);
         } else if(ACTION_REGISTER_FOR_LOCATION_UPDATES.equalsIgnoreCase(action)) {
-            result = true;
-            //Register the function for repeated location update
             locationUpdateCallback = callbackContext;
         } else if(ACTION_REGISTER_FOR_ACTIVITY_UPDATES.equalsIgnoreCase(action)) {
-          result = true;
-          detectedActivitiesCallback = callbackContext;
+            detectedActivitiesCallback = callbackContext;
         } else if(ACTION_AGGRESSIVE_TRACKING.equalsIgnoreCase(action)) {
-            result = true;
             if(isEnabled) {
                 this.cordova.getActivity().sendBroadcast(new Intent(Constants.CHANGE_AGGRESSIVE));
                 callbackContext.success();
@@ -255,8 +241,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 callbackContext.error("Tracking not enabled, need to start tracking before starting aggressive tracking");
             }
         } else if ("startTrackRecording".equalsIgnoreCase(action)) {
-          result = true;
-
           if (!sharedPrefs.contains("??")) {
             sharedPrefsEditor.putInt("??", 0);
             sharedPrefsEditor.commit();
@@ -264,8 +248,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
           callbackContext.success();
         } else if ("stopTrackRecording".equalsIgnoreCase(action)) {
-          result = true;
-
           int n = sharedPrefs.getInt("??", -1);
 
           if (n > 0) {
@@ -279,8 +261,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
           callbackContext.success();
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
-          result = true;
-
           JSONArray track = new JSONArray();
 
           if (sharedPrefs.contains("??")) {
@@ -304,6 +284,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
               callbackContext.error(ex.getMessage());
             }
           }
+        } else {
+          result = false;
         }
 
         return result;
