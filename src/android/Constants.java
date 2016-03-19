@@ -28,7 +28,7 @@ public class Constants {
 
 
   public static String getActivityString(int detectedActivityType) {
-        switch(detectedActivityType) {
+      switch(detectedActivityType) {
             case DetectedActivity.IN_VEHICLE:
                 return "IN_VEHICLE";
             case DetectedActivity.ON_BICYCLE:
@@ -48,22 +48,5 @@ public class Constants {
             default:
                 return "Unknown";
         }
-    }
-
-    public static DetectedActivity getProbableActivity(ArrayList<DetectedActivity> detectedActivities) {
-      int highestConfidence = 0;
-      DetectedActivity mostLikelyActivity = new DetectedActivity(0, DetectedActivity.UNKNOWN);
-
-      for(DetectedActivity da: detectedActivities) {
-        if(da.getType() != DetectedActivity.TILTING || da.getType() != DetectedActivity.UNKNOWN) {
-          Log.w(ConstantsTAG, "Received a Detected Activity that was not tilting / unknown");
-          if (highestConfidence < da.getConfidence()) {
-            highestConfidence = da.getConfidence();
-            mostLikelyActivity = da;
-
-          }
-        }
-      }
-      return mostLikelyActivity;
     }
 }

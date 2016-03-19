@@ -317,18 +317,19 @@ public class BackgroundLocationUpdateService
       @Override
       public void onReceive(Context context, Intent intent) {
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-        ArrayList<DetectedActivity> detectedActivities = (ArrayList) result.getProbableActivities();
 
-        //Find the activity with the highest percentage
-        lastActivity = Constants.getProbableActivity(detectedActivities);
+        lastActivity = result.getMostProbableActivity();
 
-        Log.w(TAG, "MOST LIKELY ACTIVITY: " + Constants.getActivityString(lastActivity.getType()) + " " + lastActivity.getConfidence());
+        if (isDebugging) {
+            Log.w(TAG, "MOST LIKELY ACTIVITY: " + Constants.getActivityString(lastActivity.getType()) + " " + lastActivity.getConfidence());
+        }
 
         Intent mIntent = new Intent(Constants.CALLBACK_ACTIVITY_UPDATE);
-        mIntent.putExtra(Constants.ACTIVITY_EXTRA, detectedActivities);
+        mIntent.putParcelableArrayListExtra(Constants.ACTIVITY_EXTRA,
+            (ArrayList<DetectedActivity>) result.getProbableActivities());
         getApplicationContext().sendBroadcast(mIntent);
 
-        if(lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() > 75 && isRecording) {
+        if(lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= 75 && isRecording) {
             if (isDebugging) {
                 Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
             }
@@ -490,8 +491,7 @@ public class BackgroundLocationUpdateService
        };
 
     protected synchronized void buildDAClient() {
-      Log.i(TAG, "BUILDING DA CLIENT");
-         detectedActivitiesAPI = new GoogleApiClient.Builder(this)
+        detectedActivitiesAPI = new GoogleApiClient.Builder(this)
                  .addApi(ActivityRecognition.API)
                  .addConnectionCallbacks(cb)
                  .addOnConnectionFailedListener(failedCb)

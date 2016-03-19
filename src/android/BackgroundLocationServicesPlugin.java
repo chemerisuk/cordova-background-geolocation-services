@@ -219,11 +219,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 //this.activityType = data.getString(8);
                 this.useActivityDetection = data.getString(9);
                 this.activitiesInterval = data.getString(10);
-
-
-
             } catch (JSONException e) {
-                Log.d(TAG, "Json Exception" + e);
                 callbackContext.error("JSON Exception" + e.getMessage());
             }
         } else if(ACTION_GET_VERSION.equalsIgnoreCase(action)) {
