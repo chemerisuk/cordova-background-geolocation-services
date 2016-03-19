@@ -66,5 +66,26 @@ module.exports = {
             'BackgroundLocationServices',
             'getVersion',
             []);
+    },
+    startTrackRecording: function(success, failure) {
+        exec(success || function() {},
+             failure || function() {},
+             'BackgroundLocationServices',
+             'startTrackRecording',
+             []);
+    },
+    stopTrackRecording: function(success, failure) {
+        exec(success || function() {},
+             failure || function() {},
+             'BackgroundLocationServices',
+             'stopTrackRecording',
+             []);
+    },
+    serializeTrack: function(success, failure) {
+        exec(success || function() {},
+             failure || function() {},
+             'BackgroundLocationServices',
+             'serializeTrack',
+             []);
     }
 };
