@@ -62,12 +62,16 @@ import android.graphics.BitmapFactory;
 import android.util.DisplayMetrics;
 import android.content.res.Resources;
 
-
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import java.util.ArrayList;
 import com.google.android.gms.common.ConnectionResult;
+
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.preference.PreferenceManager;
 
 //Detected Activities imports
 
@@ -117,6 +121,8 @@ public class BackgroundLocationUpdateService
 
     private LocationRequest locationRequest;
 
+    private SharedPreferences sharedPrefs;
+    private SharedPreferences.Editor sharedPrefsEditor;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -155,6 +161,9 @@ public class BackgroundLocationUpdateService
         criteria.setBearingRequired(false);
         criteria.setSpeedRequired(true);
         criteria.setCostAllowed(true);
+
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPrefsEditor = sharedPrefs.edit();
     }
 
     @Override
@@ -292,25 +301,24 @@ public class BackgroundLocationUpdateService
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String key = FusedLocationProviderApi.KEY_LOCATION_CHANGED;
-            Location location = (Location)intent.getExtras().get(key);
+            LocationResult result = LocationResult.extractResult(intent);
+            Location location = result.getLastLocation();
 
             if (location != null) {
+                recordLocations(result);
 
                 if(isDebugging) {
                     // Toast.makeText(context, "We recieveived a location update", Toast.LENGTH_SHORT).show();
                     Log.d(TAG, "- locationUpdateReceiver" + location.toString());
                 }
 
-              // Go ahead and cache, push to server
-              lastLocation = location;
+                // Go ahead and cache, push to server
+                lastLocation = location;
 
-              //This is all for setting the callback for android which currently does not work
-               Intent mIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
-               mIntent.putExtras(createLocationBundle(location));
-               getApplicationContext().sendBroadcast(mIntent);
-
-                // postLocation(location);
+                //This is all for setting the callback for android which currently does not work
+                Intent mIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
+                mIntent.putExtras(createLocationBundle(location));
+                getApplicationContext().sendBroadcast(mIntent);
             }
         }
     };
@@ -604,6 +612,39 @@ public class BackgroundLocationUpdateService
             Log.d(TAG, "No active network info");
             return false;
         }
+    }
+
+    private int recordLocations(LocationResult result) {
+        int locationsCount = 0;
+        int n = sharedPrefs.getInt("__", -1);
+
+        if (n < 0) return locationsCount;
+
+        int lastLat = sharedPrefs.getInt("_" + (n - 2), 0);
+        int lastLng = sharedPrefs.getInt("_" + (n - 1), 0);
+
+        for (Location location : result.getLocations()) {
+            int ilat = (int)(location.getLatitude() * 100000);
+            int ilng = (int)(location.getLongitude() * 100000);
+
+            if (ilat != lastLat || ilng != lastLng) {
+                sharedPrefsEditor.putInt("_" + n++, ilat);
+                sharedPrefsEditor.putInt("_" + n++, ilng);
+
+                ++locationsCount;
+            }
+        }
+
+        if (locationsCount > 0) {
+            sharedPrefsEditor.putInt("__", n);
+            sharedPrefsEditor.commit();
+
+            if (isDebugging) {
+                Log.w(TAG, "Recorded " + locationsCount + " location(s) into SharedPreferences");
+            }
+        }
+
+        return locationsCount;
     }
 
     @Override
