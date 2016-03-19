@@ -192,41 +192,27 @@ public class BackgroundLocationUpdateService
 
             useActivityDetection = Boolean.parseBoolean(intent.getStringExtra("useActivityDetection"));
 
-
-            // Build the notification / pending intent
-            Intent main = new Intent(this, BackgroundLocationServicesPlugin.class);
-            main.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, main,  PendingIntent.FLAG_UPDATE_CURRENT);
-
-            Context context = getApplicationContext();
-
-            Notification.Builder builder = new Notification.Builder(this);
-            builder.setContentTitle(notificationTitle);
-            builder.setContentText(notificationText);
-            builder.setSmallIcon(context.getApplicationInfo().icon);
-
-            Bitmap bm = BitmapFactory.decodeResource(context.getResources(),
-                                           context.getApplicationInfo().icon);
-
-            float mult = getImageFactor(getResources());
-            Bitmap scaledBm = Bitmap.createScaledBitmap(bm, (int)(bm.getWidth()*mult), (int)(bm.getHeight()*mult), false);
-
-            if(scaledBm != null) {
-              builder.setLargeIcon(scaledBm);
-            }
+            // Build the notification
+            Notification.Builder builder = new Notification.Builder(this)
+                .setContentTitle(notificationTitle)
+                .setContentText(notificationText)
+                .setSmallIcon(getIconResId());
 
             // Make clicking the event link back to the main cordova activity
-            builder.setContentIntent(pendingIntent);
             setClickEvent(builder);
 
             Notification notification;
-            if (android.os.Build.VERSION.SDK_INT >= 16) {
-                notification = buildForegroundNotification(builder);
+
+            if (Build.VERSION.SDK_INT < 16) {
+                // Build notification for HoneyComb to ICS
+                notification = builder.getNotification();
             } else {
-                notification = buildForegroundNotificationCompat(builder);
+                // Notification for Jellybean and above
+                notification = builder.build();
             }
 
             notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR;
+
             startForeground(startId, notification);
         }
 
@@ -245,6 +231,23 @@ public class BackgroundLocationUpdateService
 
         //We want this service to continue running until it is explicitly stopped
         return START_REDELIVER_INTENT;
+    }
+
+    /**
+     * Retrieves the resource ID of the app icon.
+     *
+     * @return
+     *      The resource ID of the app icon
+     */
+    private int getIconResId() {
+        Context context = getApplicationContext();
+        Resources res   = context.getResources();
+        String pkgName  = context.getPackageName();
+
+        int resId;
+        resId = res.getIdentifier("icon", "drawable", pkgName);
+
+        return resId;
     }
 
     //Receivers for setting the plugin to a certain state
@@ -556,17 +559,6 @@ public class BackgroundLocationUpdateService
     @Override
     public void onConnectionSuspended(int cause) {
         // locationClientAPI.connect();
-    }
-
-    @TargetApi(16)
-    private Notification buildForegroundNotification(Notification.Builder builder) {
-        return builder.build();
-    }
-
-    @SuppressWarnings("deprecation")
-    @TargetApi(15)
-    private Notification buildForegroundNotificationCompat(Notification.Builder builder) {
-        return builder.getNotification();
     }
 
     /**
