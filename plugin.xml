@@ -17,7 +17,8 @@
 
     <!-- android -->
     <platform name="android">
-         <framework src="com.google.android.gms:play-services-location:+" />
+        <framework src="com.google.android.gms:play-services-location:+" />
+        <framework src="com.android.support:support-v4:+" />
 
         <js-module src="www/BackgroundLocationServices.js" name="BackgroundLocationServices">
             <clobbers target="plugins.backgroundLocationServices"/>
@@ -26,8 +27,6 @@
         <source-file src="src/android/BackgroundLocationServicesPlugin.java" target-dir="src/com/flybuy/cordova/location"/>
         <source-file src="src/android/BackgroundLocationUpdateService.java" target-dir="src/com/flybuy/cordova/location"/>
         <source-file src="src/android/Constants.java" target-dir="src/com/flybuy/cordova/location"/>
-
-        <source-file src="src/android/location_icon.png" target-dir="res/drawable"/>
 
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>

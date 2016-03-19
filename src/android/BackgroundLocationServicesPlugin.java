@@ -27,6 +27,7 @@ import android.os.IBinder;
 import android.content.ComponentName;
 import android.preference.PreferenceManager;
 
+import android.support.v4.content.LocalBroadcastManager;
 import com.google.android.gms.location.DetectedActivity;
 import java.util.ArrayList;
 
@@ -73,8 +74,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private CallbackContext locationUpdateCallback = null;
     private CallbackContext detectedActivitiesCallback = null;
 
-    private BroadcastReceiver receiver = null;
-
+    private LocalBroadcastManager broadcastManager;
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
 
@@ -169,6 +169,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
       sharedPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
       sharedPrefsEditor = sharedPrefs.edit();
+
+      broadcastManager = LocalBroadcastManager.getInstance(activity.getApplicationContext());
     }
 
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
@@ -305,8 +307,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         context.startService(intent);
 
-        webView.getContext().registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.CALLBACK_LOCATION_UPDATE));
-        webView.getContext().registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.CALLBACK_ACTIVITY_UPDATE));
+        broadcastManager.registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.CALLBACK_LOCATION_UPDATE));
+        broadcastManager.registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.CALLBACK_ACTIVITY_UPDATE));
 
         didBind = true;
       } catch(Exception e) {
@@ -323,8 +325,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         context.unbindService(serviceConnection);
         context.stopService(intent);
 
-        webView.getContext().unregisterReceiver(locationUpdateReceiver);
-        webView.getContext().unregisterReceiver(detectedActivitiesReceiver);
+        broadcastManager.unregisterReceiver(locationUpdateReceiver);
+        broadcastManager.unregisterReceiver(detectedActivitiesReceiver);
 
         didUnbind = true;
       } catch(Exception e) {
@@ -355,18 +357,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     //         activity.sendBroadcast(new Intent(Constants.STOP_RECORDING));
     //     }
     // }
-
-
-    private void destroyLocationUpdateReceiver() {
-        if (this.receiver != null) {
-            try {
-                webView.getContext().unregisterReceiver(this.receiver);
-                this.receiver = null;
-            } catch (IllegalArgumentException e) {
-                Log.e(TAG, "Error unregistering location receiver: ", e);
-            }
-        }
-    }
 
     private JSONObject locationToJSON(Bundle b) {
         JSONObject data = new JSONObject();

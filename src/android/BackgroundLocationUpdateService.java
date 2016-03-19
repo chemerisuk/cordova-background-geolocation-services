@@ -72,6 +72,7 @@ import com.google.android.gms.common.ConnectionResult;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 
 //Detected Activities imports
 
@@ -93,7 +94,6 @@ public class BackgroundLocationUpdateService
 
     private Integer desiredAccuracy = 100;
     private Integer distanceFilter  = 30;
-
     private Integer activitiesInterval = 1000;
 
     private static final Integer SECONDS_PER_MINUTE      = 60;
@@ -108,21 +108,14 @@ public class BackgroundLocationUpdateService
     private String notificationText = "ENABLED";
     private Boolean useActivityDetection = false;
 
-    private Boolean stopOnTerminate;
     private Boolean isRequestingActivity = false;
     private Boolean isRecording = false;
-
-    private ToneGenerator toneGenerator;
-
-    private Criteria criteria;
-
-    private ConnectivityManager connectivityManager;
-    private NotificationManager notificationManager;
 
     private LocationRequest locationRequest;
 
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
+    private LocalBroadcastManager broadcastManager;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -137,10 +130,6 @@ public class BackgroundLocationUpdateService
         super.onCreate();
         Log.i(TAG, "OnCreate");
 
-        toneGenerator           = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
-        notificationManager     = (NotificationManager)this.getSystemService(Context.NOTIFICATION_SERVICE);
-        connectivityManager     = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-
         // Location Update PI
         Intent locationUpdateIntent = new Intent(Constants.LOCATION_UPDATE);
         locationUpdatePI = PendingIntent.getBroadcast(this, 9001, locationUpdateIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -151,17 +140,11 @@ public class BackgroundLocationUpdateService
         registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE));
 
         // Receivers for start/stop recording
-        registerReceiver(startRecordingReceiver, new IntentFilter(Constants.START_RECORDING));
-        registerReceiver(stopRecordingReceiver, new IntentFilter(Constants.STOP_RECORDING));
-        registerReceiver(startAggressiveReceiver, new IntentFilter(Constants.CHANGE_AGGRESSIVE));
+        // registerReceiver(startRecordingReceiver, new IntentFilter(Constants.START_RECORDING));
+        // registerReceiver(stopRecordingReceiver, new IntentFilter(Constants.STOP_RECORDING));
+        // registerReceiver(startAggressiveReceiver, new IntentFilter(Constants.CHANGE_AGGRESSIVE));
 
-        // Location criteria
-        criteria = new Criteria();
-        criteria.setAltitudeRequired(false);
-        criteria.setBearingRequired(false);
-        criteria.setSpeedRequired(true);
-        criteria.setCostAllowed(true);
-
+        broadcastManager = LocalBroadcastManager.getInstance(this);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefsEditor = sharedPrefs.edit();
     }
@@ -209,7 +192,6 @@ public class BackgroundLocationUpdateService
             startForeground(startId, notification);
 
             if (useActivityDetection) {
-                Log.d(TAG, "STARTING ACTIVITY DETECTION");
                 startDetectingActivities();
             }
 
@@ -251,42 +233,41 @@ public class BackgroundLocationUpdateService
     }
 
     //Receivers for setting the plugin to a certain state
-    private BroadcastReceiver startAggressiveReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            setStartAggressiveTrackingOn();
-        }
-    };
+    // private BroadcastReceiver startAggressiveReceiver = new BroadcastReceiver() {
+    //     @Override
+    //     public void onReceive(Context context, Intent intent) {
+    //         setStartAggressiveTrackingOn();
+    //     }
+    // };
 
-    private BroadcastReceiver startRecordingReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if(isDebugging) {
-               Log.d(TAG, "- Start Recording Receiver");
-            }
+    // private BroadcastReceiver startRecordingReceiver = new BroadcastReceiver() {
+    //     @Override
+    //     public void onReceive(Context context, Intent intent) {
+    //         if(isDebugging) {
+    //            Log.d(TAG, "- Start Recording Receiver");
+    //         }
 
-            if(useActivityDetection) {
-              Log.d(TAG, "STARTING ACTIVITY DETECTION");
-              startDetectingActivities();
-            }
+    //         if(useActivityDetection) {
+    //           startDetectingActivities();
+    //         }
 
-            startRecording();
-        }
-    };
+    //         startRecording();
+    //     }
+    // };
 
-    private BroadcastReceiver stopRecordingReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if(isDebugging) {
-                Log.d(TAG, "- Stop Recording Receiver");
-            }
-            if(useActivityDetection) {
-              stopDetectingActivities();
-            }
+    // private BroadcastReceiver stopRecordingReceiver = new BroadcastReceiver() {
+    //     @Override
+    //     public void onReceive(Context context, Intent intent) {
+    //         if(isDebugging) {
+    //             Log.d(TAG, "- Stop Recording Receiver");
+    //         }
+    //         if(useActivityDetection) {
+    //           stopDetectingActivities();
+    //         }
 
-            stopRecording();
-        }
-    };
+    //         stopRecording();
+    //     }
+    // };
 
     /**
      * Broadcast receiver for receiving a single-update from LocationManager.
@@ -306,7 +287,7 @@ public class BackgroundLocationUpdateService
                 //This is all for setting the callback for android which currently does not work
                 Intent mIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
                 mIntent.putExtras(createLocationBundle(lastLocation));
-                getApplicationContext().sendBroadcast(mIntent);
+                broadcastManager.sendBroadcast(localIntent);
 
                 recordLocations(result);
             }
@@ -327,7 +308,7 @@ public class BackgroundLocationUpdateService
         Intent mIntent = new Intent(Constants.CALLBACK_ACTIVITY_UPDATE);
         mIntent.putParcelableArrayListExtra(Constants.ACTIVITY_EXTRA,
             (ArrayList<DetectedActivity>) result.getProbableActivities());
-        getApplicationContext().sendBroadcast(mIntent);
+        broadcastManager.sendBroadcast(mIntent);
 
         if(lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= 75 && isRecording) {
             if (isDebugging) {
@@ -586,17 +567,6 @@ public class BackgroundLocationUpdateService
         return accuracy;
     }
 
-    private boolean isNetworkConnected() {
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        if (networkInfo != null) {
-            Log.d(TAG, "Network found, type = " + networkInfo.getTypeName());
-            return networkInfo.isConnected();
-        } else {
-            Log.d(TAG, "No active network info");
-            return false;
-        }
-    }
-
     private int recordLocations(LocationResult result) {
         int locationsCount = 0;
         int n = sharedPrefs.getInt("??", -1);
@@ -659,8 +629,8 @@ public class BackgroundLocationUpdateService
     private void cleanUp() {
         try {
             unregisterReceiver(locationUpdateReceiver);
-            unregisterReceiver(startRecordingReceiver);
-            unregisterReceiver(stopRecordingReceiver);
+            // unregisterReceiver(startRecordingReceiver);
+            // unregisterReceiver(stopRecordingReceiver);
             unregisterReceiver(detectedActivitiesReceiver);
         } catch(IllegalArgumentException e) {
                Log.e(TAG, "Error: Could not unregister receiver", e);
@@ -672,8 +642,6 @@ public class BackgroundLocationUpdateService
             Log.e(TAG, "Error: Could not stop foreground process", e);
         }
 
-
-        toneGenerator.release();
         if(locationClientAPI != null) {
             locationClientAPI.disconnect();
         }
