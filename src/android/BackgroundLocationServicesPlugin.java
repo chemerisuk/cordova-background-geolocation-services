@@ -73,12 +73,25 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, final Intent intent) {
+          final ArrayList<DetectedActivity> updatedActivities =
+            intent.getParcelableArrayListExtra(Constants.ACTIVITY_EXTRA);
 
-          cordova.getThreadPool().execute(new Runnable() {
+          if (updatedActivities == null) {
+            broadcastManager.unregisterReceiver(detectedActivitiesReceiver);
+          } else if (debug()) {
+            Toast.makeText(context, "We received an activity update", Toast.LENGTH_SHORT).show();
+          }
+
+          if (detectedActivitiesCallback != null) {
+            cordova.getThreadPool().execute(new Runnable() {
               public void run() {
                 Log.i(TAG, "Received Detected Activities");
-                ArrayList<DetectedActivity> updatedActivities =
-                intent.getParcelableArrayListExtra(Constants.ACTIVITY_EXTRA);
+
+                if (updatedActivities == null) {
+                  detectedActivitiesCallback.error("Activity was killed");
+
+                  return;
+                }
 
                 JSONObject daJSON = new JSONObject();
 
@@ -96,39 +109,37 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                   detectedActivitiesCallback.sendPluginResult(pluginResult);
                 }
               }
-          });
+            });
+          }
       }
     };
 
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, final Intent intent) {
-            if(debug()) {
-                Log.d(TAG, "Location Received, ready for callback");
+            final Bundle extras = intent.getExtras();
+
+            if (extras == null) {
+              broadcastManager.unregisterReceiver(locationUpdateReceiver);
+            } else if (debug()) {
+              Toast.makeText(context, "We received a location update", Toast.LENGTH_SHORT).show();
             }
+
             if (locationUpdateCallback != null) {
-
-                if(debug()) {
-                  Toast.makeText(context, "We received a location update", Toast.LENGTH_SHORT).show();
-                }
-
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
-                        if(intent.getExtras() == null) {
-                            locationUpdateCallback.error("ERROR: Location Was Null");
+                        if (extras == null) {
+                            detectedActivitiesCallback.error("Activity was killed");
+
+                            return;
                         }
 
-                        JSONObject data = locationToJSON(intent.getExtras());
+                        JSONObject data = locationToJSON(extras);
                         PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, data);
                         pluginResult.setKeepCallback(true);
                         locationUpdateCallback.sendPluginResult(pluginResult);
                     }
                 });
-            } else {
-                if(debug()) {
-                  Toast.makeText(context, "We received a location update but locationUpdate was null", Toast.LENGTH_SHORT).show();
-                }
-                Log.w(TAG, "WARNING LOCATION UPDATE CALLBACK IS NULL, PLEASE RUN REGISTER LOCATION UPDATES");
             }
         }
     };
@@ -372,7 +383,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             if (n == -1) {
               Activity activity = this.cordova.getActivity();
 
-              activity.stopService(updateServiceIntent);
+              unbindServiceFromWebview(activity, updateServiceIntent);
             }
         }
     }
@@ -388,7 +399,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 if (n == -1) {
                   Activity activity = this.cordova.getActivity();
 
-                  activity.stopService(updateServiceIntent);
+                  unbindServiceFromWebview(activity, updateServiceIntent);
                 }
             }
         }
