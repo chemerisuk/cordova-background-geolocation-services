@@ -155,14 +155,15 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
         Boolean result = true;
 
-        updateServiceIntent = new Intent(activity, BackgroundLocationUpdateService.class);
-        if (Build.VERSION.SDK_INT >= 16) {
-            // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
-            updateServiceIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        }
+
 
         if (ACTION_START.equalsIgnoreCase(action) && !isEnabled) {
-            callbackContext.success();
+          updateServiceIntent = new Intent(activity, BackgroundLocationUpdateService.class);
+            if (Build.VERSION.SDK_INT >= 16) {
+                // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
+                updateServiceIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+            }
+
             updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
             updateServiceIntent.putExtra("distanceFilter", distanceFilter);
             updateServiceIntent.putExtra("desiredAccuracy", desiredAccuracy);
@@ -178,6 +179,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             bindServiceToWebview(activity, updateServiceIntent);
 
             isEnabled = true;
+
+            callbackContext.success();
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
             stopTrackRecording();
 
