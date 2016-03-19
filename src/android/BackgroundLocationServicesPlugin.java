@@ -166,8 +166,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
         Boolean result = true;
 
-
-
         if (ACTION_START.equalsIgnoreCase(action) && !isEnabled) {
           updateServiceIntent = new Intent(activity, BackgroundLocationUpdateService.class);
             if (Build.VERSION.SDK_INT >= 16) {
@@ -189,15 +187,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
             bindServiceToWebview(activity, updateServiceIntent);
 
-            isEnabled = true;
-
             callbackContext.success();
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
-            stopTrackRecording();
-
             unbindServiceFromWebview(activity, updateServiceIntent, true);
-
-            isEnabled = false;
 
             callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
@@ -297,19 +289,27 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     private void bindServiceToWebview(Context context, Intent intent) {
+        if (isEnabled) return;
+
         context.startService(intent);
 
         broadcastManager.registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.CALLBACK_LOCATION_UPDATE));
         broadcastManager.registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.CALLBACK_ACTIVITY_UPDATE));
+
+        isEnabled = true;
     }
 
     private void unbindServiceFromWebview(Context context, Intent intent, boolean stopService) {
+        if (!isEnabled) return;
+
         if (stopService || sharedPrefs.getInt("??", -1) < 0) {
             context.stopService(intent);
         }
 
         broadcastManager.unregisterReceiver(locationUpdateReceiver);
         broadcastManager.unregisterReceiver(detectedActivitiesReceiver);
+
+        isEnabled = false;
     }
 
     // @Override
