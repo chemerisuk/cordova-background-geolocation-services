@@ -21,8 +21,11 @@ import android.util.Log;
 import android.widget.Toast;
 
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.IBinder;
 import android.content.ComponentName;
+import android.preference.PreferenceManager;
 
 import com.google.android.gms.location.DetectedActivity;
 import java.util.ArrayList;
@@ -73,6 +76,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private CallbackContext detectedActivitiesCallback = null;
 
     private BroadcastReceiver receiver = null;
+
+    private SharedPreferences sharedPrefs;
+    private SharedPreferences.Editor sharedPrefsEditor;
 
     // Used to (un)bind the service to with the activity
     private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -162,6 +168,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
       //Need To namespace these in case more than one app is running this bg plugin
       Constants.LOCATION_UPDATE = APP_NAME + Constants.LOCATION_UPDATE;
       Constants.DETECTED_ACTIVITY_UPDATE = APP_NAME + Constants.DETECTED_ACTIVITY_UPDATE;
+
+      sharedPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
+      sharedPrefsEditor = sharedPrefs.edit();
     }
 
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
@@ -248,6 +257,46 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             } else {
                 callbackContext.error("Tracking not enabled, need to start tracking before starting aggressive tracking");
             }
+        } else if ("startTrackRecording".equalsIgnoreCase(action)) {
+          result = true;
+
+          if (!sharedPrefs.contains("__")) {
+            editor.putInt("__", 0);
+            editor.commit();
+          }
+
+          callbackContext.success();
+        } else if ("stopTrackRecording".equalsIgnoreCase(action)) {
+          result = true;
+
+          int n = sharedPrefs.getInt("__", -1);
+
+          if (n > 0) {
+            for (int i = 0; i < n; ++i) {
+              editor.remove("_" + i);
+            }
+          }
+
+          editor.remove("__");
+          editor.commit();
+
+          callbackContext.success();
+        } else if ("serializeTrack".equalsIgnoreCase(action)) {
+          result = true;
+
+          JSONArray result = new JSONArray();
+
+          if (sharedPrefs.contains("__")) {
+            int n = sharedPrefs.getInt("__", -1);
+
+            for (int i = 0; i < n; ++i) {
+              if (sharedPrefs.contains("_" + i)) {
+                result.put(sharedPrefs.getInt("_" + i, 0));
+              }
+            }
+          }
+
+          callbackContext.success(result);
         }
 
         return result;
