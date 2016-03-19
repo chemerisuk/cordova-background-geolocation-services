@@ -139,11 +139,6 @@ public class BackgroundLocationUpdateService
         detectedActivitiesPI = PendingIntent.getBroadcast(this, 9002, detectedActivitiesIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE));
 
-        // Receivers for start/stop recording
-        // registerReceiver(startRecordingReceiver, new IntentFilter(Constants.START_RECORDING));
-        // registerReceiver(stopRecordingReceiver, new IntentFilter(Constants.STOP_RECORDING));
-        // registerReceiver(startAggressiveReceiver, new IntentFilter(Constants.CHANGE_AGGRESSIVE));
-
         broadcastManager = LocalBroadcastManager.getInstance(this);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefsEditor = sharedPrefs.edit();
@@ -193,6 +188,8 @@ public class BackgroundLocationUpdateService
 
             if (useActivityDetection) {
                 startDetectingActivities();
+            } else {
+                stopDetectingActivities();
             }
 
             startRecording();
@@ -232,43 +229,6 @@ public class BackgroundLocationUpdateService
         return resId;
     }
 
-    //Receivers for setting the plugin to a certain state
-    // private BroadcastReceiver startAggressiveReceiver = new BroadcastReceiver() {
-    //     @Override
-    //     public void onReceive(Context context, Intent intent) {
-    //         setStartAggressiveTrackingOn();
-    //     }
-    // };
-
-    // private BroadcastReceiver startRecordingReceiver = new BroadcastReceiver() {
-    //     @Override
-    //     public void onReceive(Context context, Intent intent) {
-    //         if(isDebugging) {
-    //            Log.d(TAG, "- Start Recording Receiver");
-    //         }
-
-    //         if(useActivityDetection) {
-    //           startDetectingActivities();
-    //         }
-
-    //         startRecording();
-    //     }
-    // };
-
-    // private BroadcastReceiver stopRecordingReceiver = new BroadcastReceiver() {
-    //     @Override
-    //     public void onReceive(Context context, Intent intent) {
-    //         if(isDebugging) {
-    //             Log.d(TAG, "- Stop Recording Receiver");
-    //         }
-    //         if(useActivityDetection) {
-    //           stopDetectingActivities();
-    //         }
-
-    //         stopRecording();
-    //     }
-    // };
-
     /**
      * Broadcast receiver for receiving a single-update from LocationManager.
      */
@@ -285,8 +245,8 @@ public class BackgroundLocationUpdateService
                 }
 
                 //This is all for setting the callback for android which currently does not work
-                Intent mIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
-                mIntent.putExtras(createLocationBundle(lastLocation));
+                Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
+                localIntent.putExtras(createLocationBundle(lastLocation));
                 broadcastManager.sendBroadcast(localIntent);
 
                 recordLocations(result);
@@ -629,8 +589,6 @@ public class BackgroundLocationUpdateService
     private void cleanUp() {
         try {
             unregisterReceiver(locationUpdateReceiver);
-            // unregisterReceiver(startRecordingReceiver);
-            // unregisterReceiver(stopRecordingReceiver);
             unregisterReceiver(detectedActivitiesReceiver);
         } catch(IllegalArgumentException e) {
                Log.e(TAG, "Error: Could not unregister receiver", e);
@@ -642,10 +600,13 @@ public class BackgroundLocationUpdateService
             Log.e(TAG, "Error: Could not stop foreground process", e);
         }
 
-        if(locationClientAPI != null) {
+        if (locationClientAPI != null) {
             locationClientAPI.disconnect();
         }
 
+        if (detectedActivitiesAPI != null) {
+            detectedActivitiesAPI.disconnect();
+        }
     }
 
     @Override
