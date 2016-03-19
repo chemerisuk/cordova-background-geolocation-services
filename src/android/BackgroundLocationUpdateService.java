@@ -603,27 +603,32 @@ public class BackgroundLocationUpdateService
 
     private int recordLocations(LocationResult result) {
         int locationsCount = 0;
-        int n = sharedPrefs.getInt("__", -1);
+        int n = sharedPrefs.getInt("??", -1);
 
         if (n < 0) return locationsCount;
-
-        int lastLat = sharedPrefs.getInt("_" + (n - 2), 0);
-        int lastLng = sharedPrefs.getInt("_" + (n - 1), 0);
 
         for (Location location : result.getLocations()) {
             int ilat = (int)(location.getLatitude() * 100000);
             int ilng = (int)(location.getLongitude() * 100000);
 
-            if (ilat != lastLat || ilng != lastLng) {
-                sharedPrefsEditor.putInt("_" + n++, ilat);
-                sharedPrefsEditor.putInt("_" + n++, ilng);
+            sharedPrefsEditor.putInt("?" + n++, ilat);
+            sharedPrefsEditor.putInt("?" + n++, ilng);
 
-                ++locationsCount;
+            long timestamp;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                timestamp = location.getElapsedRealtimeNanos() / 1000000;
+            } else {
+                timestamp = location.getTime();
             }
+
+            sharedPrefsEditor.putLong("?" + n++, timestamp);
+
+            ++locationsCount;
         }
 
         if (locationsCount > 0) {
-            sharedPrefsEditor.putInt("__", n);
+            sharedPrefsEditor.putInt("??", n);
             sharedPrefsEditor.commit();
 
             if (isDebugging) {

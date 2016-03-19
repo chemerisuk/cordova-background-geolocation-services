@@ -257,8 +257,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if ("startTrackRecording".equalsIgnoreCase(action)) {
           result = true;
 
-          if (!sharedPrefs.contains("__")) {
-            sharedPrefsEditor.putInt("__", 0);
+          if (!sharedPrefs.contains("??")) {
+            sharedPrefsEditor.putInt("??", 0);
             sharedPrefsEditor.commit();
           }
 
@@ -266,7 +266,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if ("stopTrackRecording".equalsIgnoreCase(action)) {
           result = true;
 
-          int n = sharedPrefs.getInt("__", -1);
+          int n = sharedPrefs.getInt("??", -1);
 
           if (n > 0) {
             for (int i = 0; i < n; ++i) {
@@ -274,7 +274,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             }
           }
 
-          sharedPrefsEditor.remove("__");
+          sharedPrefsEditor.remove("??");
           sharedPrefsEditor.commit();
 
           callbackContext.success();
@@ -283,17 +283,27 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
           JSONArray track = new JSONArray();
 
-          if (sharedPrefs.contains("__")) {
-            int n = sharedPrefs.getInt("__", -1);
+          if (sharedPrefs.contains("??")) {
+            int n = sharedPrefs.getInt("??", -1);
 
-            for (int i = 0; i < n; ++i) {
-              if (sharedPrefs.contains("_" + i)) {
-                track.put(sharedPrefs.getInt("_" + i, 0));
+            try {
+              for (int i = 0; i < n; ++i) {
+                if (sharedPrefs.contains("?" + i)) {
+                  JSONObject entry = new JSONObject();
+
+                  entry.put("x", sharedPrefs.getInt("?" + i++, 0));
+                  entry.put("y", sharedPrefs.getInt("?" + i++, 0));
+                  entry.put("t", sharedPrefs.getLong("?" + i, 0));
+
+                  track.put(entry);
+                }
               }
+
+              callbackContext.success(track);
+            } catch (JSONException ex) {
+              callbackContext.error(ex.getMessage());
             }
           }
-
-          callbackContext.success(track);
         }
 
         return result;
