@@ -13,15 +13,16 @@
         <engine name="cordova" version=">=3.0.0"/>
     </engines>
 
-    <dependency id="cordova-plugin-geolocation"/>
-    <framework src="com.google.android.gms:play-services-location:+" />
-
-    <js-module src="www/BackgroundLocationServices.js" name="BackgroundLocationServices">
-        <clobbers target="plugins.backgroundLocationServices"/>
-    </js-module>
+    <!-- <dependency id="cordova-plugin-geolocation"/> -->
 
     <!-- android -->
     <platform name="android">
+         <framework src="com.google.android.gms:play-services-location:+" />
+
+        <js-module src="www/BackgroundLocationServices.js" name="BackgroundLocationServices">
+            <clobbers target="plugins.backgroundLocationServices"/>
+        </js-module>
+
         <source-file src="src/android/BackgroundLocationServicesPlugin.java" target-dir="src/com/flybuy/cordova/location"/>
         <source-file src="src/android/BackgroundLocationUpdateService.java" target-dir="src/com/flybuy/cordova/location"/>
         <source-file src="src/android/Constants.java" target-dir="src/com/flybuy/cordova/location"/>
@@ -52,8 +53,7 @@
 
     </platform>
 
-    <platform name="ios">
-        <!-- required background modes:  App registers for location updates -->
+<!--     <platform name="ios">
         <hook type="after_plugin_install" src="hooks/add_swift_support.js"/>
 
         <config-file target="*-Info.plist" parent="NSLocationAlwaysUsageDescription">
@@ -75,5 +75,5 @@
         <framework src="AVFoundation.framework" weak="true"/>
         <source-file src="src/ios/CDVBackgroundLocationServices.swift"/>
         <header-file src="src/ios/Loc-Bridging-Header.h"/>
-    </platform>
+    </platform> -->
 </plugin>
