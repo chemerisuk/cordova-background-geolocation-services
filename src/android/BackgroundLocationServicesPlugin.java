@@ -63,13 +63,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private String notificationText = "ENABLED";
     private String useActivityDetection = "false";
 
-    //Things I want to remove
-    private String url;
-    private String params;
-    private String headers;
-
-    private JSONArray fences = null;
-
     private CallbackContext locationUpdateCallback = null;
     private CallbackContext detectedActivitiesCallback = null;
 
