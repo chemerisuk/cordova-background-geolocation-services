@@ -147,8 +147,8 @@ public class BackgroundLocationUpdateService
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Received start id " + startId + ": " + intent);
-        if (intent != null) {
 
+        if (intent != null) {
             distanceFilter = Integer.parseInt(intent.getStringExtra("distanceFilter"));
             desiredAccuracy = Integer.parseInt(intent.getStringExtra("desiredAccuracy"));
 
@@ -518,7 +518,11 @@ public class BackgroundLocationUpdateService
     public void onTaskRemoved(Intent rootIntent) {
         Log.w(TAG, "Application killed from task manager - Cleaning up");
 
-        stopSelf();
+        int n = sharedPrefs.getInt("??", -1);
+
+        if (n == -1) {
+            stopSelf();
+        }
 
         super.onTaskRemoved(rootIntent);
     }

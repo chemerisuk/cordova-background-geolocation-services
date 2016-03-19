@@ -77,21 +77,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
 
-    // Used to (un)bind the service to with the activity
-    private final ServiceConnection serviceConnection = new ServiceConnection() {
-      @Override
-      public void onServiceConnected(ComponentName name, IBinder binder) {
-          // Nothing to do here
-          Log.i(TAG, "SERVICE CONNECTED TO MAIN ACTIVITY");
-      }
-
-      @Override
-      public void onServiceDisconnected(ComponentName name) {
-        // Nothing to do here
-        Log.i(TAG, "SERVICE DISCONNECTED");
-      }
-    };
-
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, final Intent intent) {
@@ -306,7 +291,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
       Boolean didBind = false;
 
       try {
-        context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         context.startService(intent);
 
         broadcastManager.registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.CALLBACK_LOCATION_UPDATE));
@@ -324,7 +308,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         Boolean didUnbind = false;
 
       try {
-        context.unbindService(serviceConnection);
         context.stopService(intent);
 
         broadcastManager.unregisterReceiver(locationUpdateReceiver);
@@ -384,9 +367,13 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
      */
     public void onDestroy() {
         if (isEnabled) {
-            Activity activity = this.cordova.getActivity();
+            int n = sharedPrefs.getInt("??", -1);
 
-            activity.stopService(updateServiceIntent);
+            if (n == -1) {
+              Activity activity = this.cordova.getActivity();
+
+              activity.stopService(updateServiceIntent);
+            }
         }
     }
 
@@ -396,9 +383,13 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     public Object onMessage(String id, Object data) {
         if (id == "exit") {
             if (isEnabled) {
-                Activity activity = this.cordova.getActivity();
+                int n = sharedPrefs.getInt("??", -1);
 
-                activity.stopService(updateServiceIntent);
+                if (n == -1) {
+                  Activity activity = this.cordova.getActivity();
+
+                  activity.stopService(updateServiceIntent);
+                }
             }
         }
 
