@@ -129,6 +129,13 @@ public class BackgroundLocationUpdateService
         // TODO Auto-generated method stub
         Log.i(TAG, "OnBind" + intent);
 
+        if (useActivityDetection) {
+          Log.d(TAG, "STARTING ACTIVITY DETECTION");
+          startDetectingActivities();
+        }
+
+        startRecording();
+
         return null;
     }
 
@@ -208,24 +215,7 @@ public class BackgroundLocationUpdateService
               builder.setLargeIcon(scaledBm);
             }
 
-            // Integer resId = getPluginResource("location_icon");
-            //
-            // //Scale our location_icon.png for different phone resolutions
-            // //TODO: Get this icon via a filepath from the user
-            // if(resId != 0) {
-            //     Bitmap bm = BitmapFactory.decodeResource(getResources(), resId);
-            //
-            //     float mult = getImageFactor(getResources());
-            //     Bitmap scaledBm = Bitmap.createScaledBitmap(bm, (int)(bm.getWidth()*mult), (int)(bm.getHeight()*mult), false);
-            //
-            //     if(scaledBm != null) {
-            //         builder.setLargeIcon(scaledBm);
-            //     }
-            // } else {
-            //     Log.w(TAG, "Could NOT find Resource for large icon");
-            // }
-
-            //Make clicking the event link back to the main cordova activity
+            // Make clicking the event link back to the main cordova activity
             builder.setContentIntent(pendingIntent);
             setClickEvent(builder);
 
@@ -307,8 +297,7 @@ public class BackgroundLocationUpdateService
                 lastLocation = result.getLastLocation();
 
                 if(isDebugging) {
-                    // Toast.makeText(context, "We recieveived a location update", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "- locationUpdateReceiver" + lastLocation.toString());
+                    Log.d(TAG, "- locationUpdateReceiver: " + lastLocation);
                 }
 
                 //This is all for setting the callback for android which currently does not work
@@ -660,7 +649,9 @@ public class BackgroundLocationUpdateService
     @Override
     public void onDestroy() {
         Log.w(TAG, "Destroyed Location Update Service - Cleaning up");
+        this.stopRecording();
         this.cleanUp();
+
         super.onDestroy();
     }
 

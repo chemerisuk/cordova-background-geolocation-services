@@ -200,14 +200,11 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
               isEnabled = true;
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
-            isEnabled = false;
             result = true;
-            activity.stopService(updateServiceIntent);
-            callbackContext.success();
 
-            result = unbindServiceFromWebview(activity, updateServiceIntent);
+            if (unbindServiceFromWebview(activity, updateServiceIntent)) {
+                isEnabled = false;
 
-            if(result) {
                 callbackContext.success();
             } else {
                 callbackContext.error("Failed To Stop The Service");
@@ -350,27 +347,27 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
       return didUnbind;
     }
 
-    @Override
-    public void onPause(boolean multitasking) {
-        if(debug()) {
-            Log.d(TAG, "- locationUpdateReceiver Paused (starting recording = " + String.valueOf(isEnabled) + ")");
-        }
-        if (isEnabled) {
-            Activity activity = this.cordova.getActivity();
-            activity.sendBroadcast(new Intent(Constants.START_RECORDING));
-        }
-    }
+    // @Override
+    // public void onPause(boolean multitasking) {
+    //     if(debug()) {
+    //         Log.d(TAG, "- locationUpdateReceiver Paused (starting recording = " + String.valueOf(isEnabled) + ")");
+    //     }
+    //     if (isEnabled) {
+    //         Activity activity = this.cordova.getActivity();
+    //         activity.sendBroadcast(new Intent(Constants.START_RECORDING));
+    //     }
+    // }
 
-    @Override
-    public void onResume(boolean multitasking) {
-        if(debug()) {
-            Log.d(TAG, "- locationUpdateReceiver Resumed (stopping recording)" + String.valueOf(isEnabled));
-        }
-        if (isEnabled) {
-            Activity activity = this.cordova.getActivity();
-            activity.sendBroadcast(new Intent(Constants.STOP_RECORDING));
-        }
-    }
+    // @Override
+    // public void onResume(boolean multitasking) {
+    //     if(debug()) {
+    //         Log.d(TAG, "- locationUpdateReceiver Resumed (stopping recording)" + String.valueOf(isEnabled));
+    //     }
+    //     if (isEnabled) {
+    //         Activity activity = this.cordova.getActivity();
+    //         activity.sendBroadcast(new Intent(Constants.STOP_RECORDING));
+    //     }
+    // }
 
 
     private void destroyLocationUpdateReceiver() {
