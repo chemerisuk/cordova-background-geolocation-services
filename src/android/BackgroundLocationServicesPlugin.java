@@ -195,13 +195,11 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
             stopTrackRecording();
 
-            if (unbindServiceFromWebview(activity, updateServiceIntent)) {
-                isEnabled = false;
+            unbindServiceFromWebview(activity, updateServiceIntent, true);
 
-                callbackContext.success();
-            } else {
-                callbackContext.error("Failed To Stop The Service");
-            }
+            isEnabled = false;
+
+            callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             try {
                 // [distanceFilter, desiredAccuracy, interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, fences, url, params, headers]
@@ -298,38 +296,20 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         }
     }
 
-    private Boolean bindServiceToWebview(Context context, Intent intent) {
-      Boolean didBind = false;
-
-      try {
+    private void bindServiceToWebview(Context context, Intent intent) {
         context.startService(intent);
 
         broadcastManager.registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.CALLBACK_LOCATION_UPDATE));
         broadcastManager.registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.CALLBACK_ACTIVITY_UPDATE));
-
-        didBind = true;
-      } catch(Exception e) {
-        Log.e(TAG, "ERROR BINDING SERVICE" + e);
-      }
-
-      return didBind;
     }
 
-    private Boolean unbindServiceFromWebview(Context context, Intent intent) {
-        Boolean didUnbind = false;
-
-      try {
-        context.stopService(intent);
+    private void unbindServiceFromWebview(Context context, Intent intent, boolean stopService) {
+        if (stopService || sharedPrefs.getInt("??", -1) < 0) {
+            context.stopService(intent);
+        }
 
         broadcastManager.unregisterReceiver(locationUpdateReceiver);
         broadcastManager.unregisterReceiver(detectedActivitiesReceiver);
-
-        didUnbind = true;
-      } catch(Exception e) {
-        Log.e(TAG, "ERROR UNBINDING SERVICE" + e);
-      }
-
-      return didUnbind;
     }
 
     // @Override
@@ -378,13 +358,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
      */
     public void onDestroy() {
         if (isEnabled) {
-            int n = sharedPrefs.getInt("??", -1);
+            Activity activity = this.cordova.getActivity();
 
-            if (n == -1) {
-              Activity activity = this.cordova.getActivity();
-
-              unbindServiceFromWebview(activity, updateServiceIntent);
-            }
+            unbindServiceFromWebview(activity, updateServiceIntent, false);
         }
     }
 
@@ -394,13 +370,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     public Object onMessage(String id, Object data) {
         if (id == "exit") {
             if (isEnabled) {
-                int n = sharedPrefs.getInt("??", -1);
+                Activity activity = this.cordova.getActivity();
 
-                if (n == -1) {
-                  Activity activity = this.cordova.getActivity();
-
-                  unbindServiceFromWebview(activity, updateServiceIntent);
-                }
+                unbindServiceFromWebview(activity, updateServiceIntent, false);
             }
         }
 

@@ -530,10 +530,6 @@ public class BackgroundLocationUpdateService
             Log.w(TAG, "Application killed from task manager - Cleaning up");
 
             stopSelf();
-        } else {
-            // send intents with no data to unregister application callbacks
-            broadcastManager.sendBroadcast(new Intent(Constants.CALLBACK_LOCATION_UPDATE));
-            broadcastManager.sendBroadcast(new Intent(Constants.CALLBACK_ACTIVITY_UPDATE));
         }
 
         super.onTaskRemoved(rootIntent);
