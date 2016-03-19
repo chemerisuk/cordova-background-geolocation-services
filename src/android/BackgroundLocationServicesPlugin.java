@@ -261,8 +261,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
           result = true;
 
           if (!sharedPrefs.contains("__")) {
-            editor.putInt("__", 0);
-            editor.commit();
+            sharedPrefsEditor.putInt("__", 0);
+            sharedPrefsEditor.commit();
           }
 
           callbackContext.success();
@@ -273,30 +273,30 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
           if (n > 0) {
             for (int i = 0; i < n; ++i) {
-              editor.remove("_" + i);
+              sharedPrefsEditor.remove("_" + i);
             }
           }
 
-          editor.remove("__");
-          editor.commit();
+          sharedPrefsEditor.remove("__");
+          sharedPrefsEditor.commit();
 
           callbackContext.success();
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
           result = true;
 
-          JSONArray result = new JSONArray();
+          JSONArray track = new JSONArray();
 
           if (sharedPrefs.contains("__")) {
             int n = sharedPrefs.getInt("__", -1);
 
             for (int i = 0; i < n; ++i) {
               if (sharedPrefs.contains("_" + i)) {
-                result.put(sharedPrefs.getInt("_" + i, 0));
+                track.put(sharedPrefs.getInt("_" + i, 0));
               }
             }
           }
 
-          callbackContext.success(result);
+          callbackContext.success(track);
         }
 
         return result;
