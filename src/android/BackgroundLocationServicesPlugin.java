@@ -61,7 +61,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private String isDebugging = "false";
     private String notificationTitle = "Location Tracking";
     private String notificationText = "ENABLED";
-    private String stopOnTerminate = "false";
     private String useActivityDetection = "false";
 
     //Things I want to remove
@@ -392,10 +391,25 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
      * Checks to see if it should turn off
      */
     public void onDestroy() {
-        Activity activity = this.cordova.getActivity();
+        if (isEnabled) {
+            Activity activity = this.cordova.getActivity();
 
-        if(isEnabled && stopOnTerminate.equalsIgnoreCase("true")) {
             activity.stopService(updateServiceIntent);
         }
+    }
+
+    /**
+     * Called when a message is sent to plugin.
+     */
+    public Object onMessage(String id, Object data) {
+        if (id == "exit") {
+            if (isEnabled) {
+                Activity activity = this.cordova.getActivity();
+
+                activity.stopService(updateServiceIntent);
+            }
+        }
+
+        return null;
     }
 }
