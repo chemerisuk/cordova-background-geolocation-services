@@ -46,13 +46,6 @@ module.exports = {
              'start',
              []);
     },
-    startAggressiveTracking: function(success, failure) {
-        exec(success || function() {},
-             failure || function() {},
-             'BackgroundLocationServices',
-             'startAggressiveTracking',
-             []);
-    },
     stop: function(success, failure, config) {
         exec(success || function() {},
             failure || function() {},

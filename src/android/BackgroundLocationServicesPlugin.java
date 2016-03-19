@@ -38,7 +38,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     public static final String ACTION_START = "start";
     public static final String ACTION_STOP = "stop";
     public static final String ACTION_CONFIGURE = "configure";
-    public static final String ACTION_AGGRESSIVE_TRACKING = "startAggressiveTracking";
     public static final String ACTION_GET_VERSION = "getVersion";
     public static final String ACTION_REGISTER_FOR_LOCATION_UPDATES = "registerForLocationUpdates";
     public static final String ACTION_REGISTER_FOR_ACTIVITY_UPDATES = "registerForActivityUpdates";
@@ -230,13 +229,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             locationUpdateCallback = callbackContext;
         } else if(ACTION_REGISTER_FOR_ACTIVITY_UPDATES.equalsIgnoreCase(action)) {
             detectedActivitiesCallback = callbackContext;
-        } else if(ACTION_AGGRESSIVE_TRACKING.equalsIgnoreCase(action)) {
-            if(isEnabled) {
-                this.cordova.getActivity().sendBroadcast(new Intent(Constants.CHANGE_AGGRESSIVE));
-                callbackContext.success();
-            } else {
-                callbackContext.error("Tracking not enabled, need to start tracking before starting aggressive tracking");
-            }
         } else if ("startTrackRecording".equalsIgnoreCase(action)) {
           if (!sharedPrefs.contains("??")) {
             sharedPrefsEditor.putInt("??", 0);

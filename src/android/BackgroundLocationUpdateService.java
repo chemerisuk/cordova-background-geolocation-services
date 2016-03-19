@@ -88,9 +88,8 @@ public class BackgroundLocationUpdateService
     private Boolean fastestSpeed = false;
 
     private PendingIntent locationUpdatePI;
-    private GoogleApiClient locationClientAPI;
+    private GoogleApiClient googleClientAPI;
     private PendingIntent detectedActivitiesPI;
-    private GoogleApiClient detectedActivitiesAPI;
 
     private Integer desiredAccuracy = 100;
     private Integer distanceFilter  = 30;
@@ -108,8 +107,9 @@ public class BackgroundLocationUpdateService
     private String notificationText = "ENABLED";
     private Boolean useActivityDetection = false;
 
-    private Boolean isRequestingActivity = false;
+    private Boolean isDetectingActivities = false;
     private Boolean isRecording = false;
+    private boolean startRecordingOnConnect = true;
 
     private LocationRequest locationRequest;
 
@@ -192,7 +192,7 @@ public class BackgroundLocationUpdateService
                 stopDetectingActivities();
             }
 
-            startRecording();
+            startLocationWatching();
         }
 
         // Log.i(TAG, "- url: " + url);
@@ -275,13 +275,13 @@ public class BackgroundLocationUpdateService
                 Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
             }
 
-            stopRecording();
+            stopLocationWatching();
         } else if(lastActivity.getType() != DetectedActivity.STILL && !isRecording) {
             if (isDebugging) {
                 Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
             }
 
-            startRecording();
+            startLocationWatching();
         }
       }
     };
@@ -328,171 +328,97 @@ public class BackgroundLocationUpdateService
       return b;
     }
 
-    private boolean enabled = false;
-    private boolean startRecordingOnConnect = true;
-
-    private void enable() {
-        this.enabled = true;
-    }
-
-    private void disable() {
-        this.enabled = false;
-    }
-
-    private void setStartAggressiveTrackingOn() {
-        if(!fastestSpeed && this.isRecording) {
-            detachRecorder();
-
-            desiredAccuracy = 10;
-            fastestInterval = (long) (aggressiveInterval / 2);
-            interval = aggressiveInterval;
-
-            attachRecorder();
-
-            Log.e(TAG, "Changed Location params" + locationRequest.toString());
-            fastestSpeed = true;
-        }
-    }
-
-    public void startDetectingActivities() {
-      this.isRequestingActivity = true;
-      attachDARecorder();
-    }
-
-    public void stopDetectingActivities() {
-      this.isRequestingActivity = false;
-      detatchDARecorder();
-    }
-
-    private void attachDARecorder() {
-      if (detectedActivitiesAPI == null) {
-          buildDAClient();
-      } else if (detectedActivitiesAPI.isConnected()) {
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
-                        detectedActivitiesAPI,
-                        this.activitiesInterval,
-                        detectedActivitiesPI
-                );
-          if(isDebugging) {
-              Log.d(TAG, "- DA RECORDER attached - start recording location updates");
-          }
-      } else {
-        Log.i(TAG, "NOT CONNECTED, CONNECT");
-          detectedActivitiesAPI.connect();
-      }
-    }
-
-    private void detatchDARecorder() {
-      if (detectedActivitiesAPI == null) {
-          buildDAClient();
-      } else if (detectedActivitiesAPI.isConnected()) {
-        ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(detectedActivitiesAPI, detectedActivitiesPI);
-          if(isDebugging) {
-              Log.d(TAG, "- Recorder detached - stop recording activity updates");
-          }
-      } else {
-          detectedActivitiesAPI.connect();
-      }
-    }
-
-
-    public void startRecording() {
-        Log.w(TAG, "Started Recording Locations");
-        this.startRecordingOnConnect = true;
-        attachRecorder();
-    }
-
-    public void stopRecording() {
-        this.startRecordingOnConnect = false;
-        detachRecorder();
-    }
-
-    private GoogleApiClient.ConnectionCallbacks cb = new GoogleApiClient.ConnectionCallbacks() {
-           @Override
-           public void onConnected(Bundle bundle) {
-               Log.w(TAG, "Activity Client Connected");
-               ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
-                       detectedActivitiesAPI,
-                       activitiesInterval,
-                       detectedActivitiesPI
-               );
-           }
-           @Override
-           public void onConnectionSuspended(int i) {
-              Log.w(TAG, "Connection To Activity Suspended");
-              Toast.makeText(getApplicationContext(), "Activity Client Suspended", Toast.LENGTH_SHORT).show();
-           }
-       };
-
-      private GoogleApiClient.OnConnectionFailedListener failedCb = new GoogleApiClient.OnConnectionFailedListener() {
-           @Override
-           public void onConnectionFailed(ConnectionResult cr) {
-               Log.w(TAG, "ERROR CONNECTING TO DETECTED ACTIVITIES");
-           }
-       };
-
-    protected synchronized void buildDAClient() {
-        detectedActivitiesAPI = new GoogleApiClient.Builder(this)
-                 .addApi(ActivityRecognition.API)
-                 .addConnectionCallbacks(cb)
-                 .addOnConnectionFailedListener(failedCb)
-                 .build();
-
-        detectedActivitiesAPI.connect();
-    }
-
     protected synchronized void connectToPlayAPI() {
-        locationClientAPI =  new GoogleApiClient.Builder(this)
+        googleClientAPI = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
+                .addApi(ActivityRecognition.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-        locationClientAPI.connect();
+        googleClientAPI.connect();
     }
 
-    private void attachRecorder() {
-      Log.i(TAG, "Attaching Recorder");
-        if (locationClientAPI == null) {
+    private void startLocationWatching() {
+        this.startRecordingOnConnect = true;
+
+        if (googleClientAPI == null) {
             connectToPlayAPI();
-        } else if (locationClientAPI.isConnected()) {
+        } else if (googleClientAPI.isConnected()) {
             locationRequest = LocationRequest.create()
                     .setPriority(translateDesiredAccuracy(desiredAccuracy))
                     .setFastestInterval(fastestInterval)
                     .setInterval(interval)
                     .setSmallestDisplacement(distanceFilter);
-            LocationServices.FusedLocationApi.requestLocationUpdates(locationClientAPI, locationRequest, locationUpdatePI);
+            LocationServices.FusedLocationApi.requestLocationUpdates(googleClientAPI, locationRequest, locationUpdatePI);
             this.isRecording = true;
 
             if(isDebugging) {
                 Log.d(TAG, "- Recorder attached - start recording location updates");
             }
         } else {
-            locationClientAPI.connect();
+            googleClientAPI.connect();
         }
     }
 
-    private void detachRecorder() {
-        if (locationClientAPI == null) {
+    private void stopLocationWatching() {
+        this.startRecordingOnConnect = false;
+
+        if (googleClientAPI == null) {
             connectToPlayAPI();
-        } else if (locationClientAPI.isConnected()) {
+        } else if (googleClientAPI.isConnected()) {
             //flush the location updates from the api
-            LocationServices.FusedLocationApi.removeLocationUpdates(locationClientAPI, locationUpdatePI);
+            LocationServices.FusedLocationApi.removeLocationUpdates(googleClientAPI, locationUpdatePI);
             this.isRecording = false;
             if(isDebugging) {
                 Log.w(TAG, "- Recorder detached - stop recording location updates");
             }
         } else {
-            locationClientAPI.connect();
+            googleClientAPI.connect();
+        }
+    }
+
+    private void startDetectingActivities() {
+        if (!isDetectingActivities && googleClientAPI != null) {
+            if (!googleClientAPI.isConnected()) {
+                if (useActivityDetection) {
+                    googleClientAPI.connect();
+                }
+            } else if (useActivityDetection) {
+                isDetectingActivities = true;
+
+                ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+                    googleClientAPI, activitiesInterval, detectedActivitiesPI);
+
+                Log.d(TAG, "- Activity Listener registered with interval " + activitiesInterval);
+            }
+        }
+    }
+
+    private void stopDetectingActivities() {
+        if (isDetectingActivities && googleClientAPI != null) {
+            isDetectingActivities = false;
+
+            if (googleClientAPI.isConnected()) {
+                ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(
+                    googleClientAPI, detectedActivitiesPI);
+
+                Log.d(TAG, "- Activity Listener unregistered");
+            }
         }
     }
 
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.d(TAG, "- Connected to Play API -- All ready to record");
+
         if (this.startRecordingOnConnect) {
-            attachRecorder();
+            startLocationWatching();
         } else {
-            detachRecorder();
+            stopLocationWatching();
+        }
+
+        if (useActivityDetection) {
+            startDetectingActivities();
         }
     }
 
@@ -503,7 +429,7 @@ public class BackgroundLocationUpdateService
 
     @Override
     public void onConnectionSuspended(int cause) {
-        // locationClientAPI.connect();
+        // googleClientAPI.connect();
     }
 
     /**
@@ -568,7 +494,8 @@ public class BackgroundLocationUpdateService
     @Override
     public boolean stopService(Intent intent) {
         Log.i(TAG, "- Received stop: " + intent);
-        this.stopRecording();
+        this.stopLocationWatching();
+        this.stopDetectingActivities();
         this.cleanUp();
 
         if (isDebugging) {
@@ -580,7 +507,8 @@ public class BackgroundLocationUpdateService
     @Override
     public void onDestroy() {
         Log.w(TAG, "Destroyed Location Update Service - Cleaning up");
-        this.stopRecording();
+        this.stopLocationWatching();
+        this.stopDetectingActivities();
         this.cleanUp();
 
         super.onDestroy();
@@ -600,18 +528,15 @@ public class BackgroundLocationUpdateService
             Log.e(TAG, "Error: Could not stop foreground process", e);
         }
 
-        if (locationClientAPI != null) {
-            locationClientAPI.disconnect();
-        }
-
-        if (detectedActivitiesAPI != null) {
-            detectedActivitiesAPI.disconnect();
+        if (googleClientAPI != null) {
+            googleClientAPI.disconnect();
         }
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        this.stopRecording();
+        this.stopLocationWatching();
+        this.stopDetectingActivities();
         this.stopSelf();
         super.onTaskRemoved(rootIntent);
     }
