@@ -492,41 +492,22 @@ public class BackgroundLocationUpdateService
     }
 
     @Override
-    public boolean stopService(Intent intent) {
-        Log.i(TAG, "- Received stop: " + intent);
-        this.stopLocationWatching();
-        this.stopDetectingActivities();
-        this.cleanUp();
-
-        if (isDebugging) {
-            Toast.makeText(this, "Background location tracking stopped", Toast.LENGTH_SHORT).show();
-        }
-        return super.stopService(intent);
-    }
-
-    @Override
     public void onDestroy() {
         Log.w(TAG, "Destroyed Location Update Service - Cleaning up");
-        this.stopLocationWatching();
-        this.stopDetectingActivities();
-        this.cleanUp();
+
+        cleanUp();
 
         super.onDestroy();
     }
 
     private void cleanUp() {
-        try {
-            unregisterReceiver(locationUpdateReceiver);
-            unregisterReceiver(detectedActivitiesReceiver);
-        } catch(IllegalArgumentException e) {
-               Log.e(TAG, "Error: Could not unregister receiver", e);
-        }
+        stopLocationWatching();
+        stopDetectingActivities();
 
-        try {
-            stopForeground(true);
-        } catch (Exception e) {
-            Log.e(TAG, "Error: Could not stop foreground process", e);
-        }
+        unregisterReceiver(locationUpdateReceiver);
+        unregisterReceiver(detectedActivitiesReceiver);
+
+        stopForeground(true);
 
         if (googleClientAPI != null) {
             googleClientAPI.disconnect();
@@ -535,9 +516,10 @@ public class BackgroundLocationUpdateService
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        this.stopLocationWatching();
-        this.stopDetectingActivities();
-        this.stopSelf();
+        Log.w(TAG, "Application killed from task manager - Cleaning up");
+
+        stopSelf();
+
         super.onTaskRemoved(rootIntent);
     }
 

@@ -197,6 +197,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
             isEnabled = true;
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
+            stopTrackRecording();
+
             if (unbindServiceFromWebview(activity, updateServiceIntent)) {
                 isEnabled = false;
 
@@ -230,23 +232,11 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if(ACTION_REGISTER_FOR_ACTIVITY_UPDATES.equalsIgnoreCase(action)) {
             detectedActivitiesCallback = callbackContext;
         } else if ("startTrackRecording".equalsIgnoreCase(action)) {
-          if (!sharedPrefs.contains("??")) {
-            sharedPrefsEditor.putInt("??", 0);
-            sharedPrefsEditor.commit();
-          }
+          startTrackRecording();
 
           callbackContext.success();
         } else if ("stopTrackRecording".equalsIgnoreCase(action)) {
-          int n = sharedPrefs.getInt("??", -1);
-
-          if (n > 0) {
-            for (int i = 0; i < n; ++i) {
-              sharedPrefsEditor.remove("_" + i);
-            }
-          }
-
-          sharedPrefsEditor.remove("??");
-          sharedPrefsEditor.commit();
+          stopTrackRecording();
 
           callbackContext.success();
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
@@ -278,6 +268,26 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         }
 
         return result;
+    }
+
+    private void startTrackRecording() {
+        if (!sharedPrefs.contains("??")) {
+            sharedPrefsEditor.putInt("??", 0);
+            sharedPrefsEditor.commit();
+        }
+    }
+
+    private void stopTrackRecording() {
+        int n = sharedPrefs.getInt("??", -1);
+
+        if (n > 0) {
+            for (int i = 0; i < n; ++i) {
+                sharedPrefsEditor.remove("_" + i);
+            }
+        }
+
+        sharedPrefsEditor.remove("??");
+        sharedPrefsEditor.commit();
     }
 
     public String getApplicationName(Context context) {
