@@ -24,6 +24,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.IBinder;
+import android.os.Build;
 import android.content.ComponentName;
 import android.preference.PreferenceManager;
 
@@ -46,7 +47,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
     private Boolean isEnabled = false;
     private Boolean inBackground = false;
-    private boolean isServiceBound = false;
 
     private String desiredAccuracy = "1000";
 
@@ -156,6 +156,10 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         Boolean result = true;
 
         updateServiceIntent = new Intent(activity, BackgroundLocationUpdateService.class);
+        if (Build.VERSION.SDK_INT >= 16) {
+            // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
+            updateServiceIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        }
 
         if (ACTION_START.equalsIgnoreCase(action) && !isEnabled) {
             callbackContext.success();
@@ -171,7 +175,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             updateServiceIntent.putExtra("activitiesInterval", activitiesInterval);
             updateServiceIntent.putExtra("useActivityDetection", useActivityDetection);
 
-            isServiceBound = bindServiceToWebview(activity, updateServiceIntent);
+            bindServiceToWebview(activity, updateServiceIntent);
 
             isEnabled = true;
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
