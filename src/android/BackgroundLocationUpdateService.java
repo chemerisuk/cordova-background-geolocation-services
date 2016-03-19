@@ -302,23 +302,21 @@ public class BackgroundLocationUpdateService
         @Override
         public void onReceive(Context context, Intent intent) {
             LocationResult result = LocationResult.extractResult(intent);
-            Location location = result.getLastLocation();
 
-            if (location != null) {
-                recordLocations(result);
+            if (result != null) {
+                lastLocation = result.getLastLocation();
 
                 if(isDebugging) {
                     // Toast.makeText(context, "We recieveived a location update", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "- locationUpdateReceiver" + location.toString());
+                    Log.d(TAG, "- locationUpdateReceiver" + lastLocation.toString());
                 }
-
-                // Go ahead and cache, push to server
-                lastLocation = location;
 
                 //This is all for setting the callback for android which currently does not work
                 Intent mIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
-                mIntent.putExtras(createLocationBundle(location));
+                mIntent.putExtras(createLocationBundle(lastLocation));
                 getApplicationContext().sendBroadcast(mIntent);
+
+                recordLocations(result);
             }
         }
     };
