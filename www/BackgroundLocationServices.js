@@ -2,7 +2,7 @@ var exec = require("cordova/exec");
 module.exports = {
     pName : 'BackgroundLocationServices',
     config: {},
-     configure: function(config) {
+     configure: function(config, success, failure) {
         this.config = config;
         var distanceFilter      = (config.distanceFilter   >= 0) ? config.distanceFilter   : 500, // meters
             desiredAccuracy     = (config.desiredAccuracy  >= 0) ? config.desiredAccuracy  : 100, // meters
@@ -16,8 +16,8 @@ module.exports = {
             activitiesInterval  = config.activitiesInterval || 0;
             keepAwake           = config.keepAwake || false;
 
-        exec(function() {},
-             function() {},
+        exec(success || function() {},
+             failure || function() {},
              'BackgroundLocationServices',
              'configure',
              [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, keepAwake, activitiesInterval]
