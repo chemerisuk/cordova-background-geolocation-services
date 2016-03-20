@@ -73,42 +73,31 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, final Intent intent) {
-          final ArrayList<DetectedActivity> updatedActivities =
-            intent.getParcelableArrayListExtra(Constants.ACTIVITY_EXTRA);
+            if (detectedActivitiesCallback == null) return;
 
-          if (updatedActivities == null) {
-            broadcastManager.unregisterReceiver(detectedActivitiesReceiver);
-          } else if (debug()) {
-            Toast.makeText(context, "We received an activity update", Toast.LENGTH_SHORT).show();
-          }
-
-          if (detectedActivitiesCallback != null) {
             cordova.getThreadPool().execute(new Runnable() {
-              public void run() {
-                Log.i(TAG, "Received Detected Activities");
+                public void run() {
+                    Log.i(TAG, "Received Detected Activities");
 
-                if (updatedActivities == null) {
-                  detectedActivitiesCallback.error("Activity was killed");
+                    final ArrayList<DetectedActivity> updatedActivities =
+                        intent.getParcelableArrayListExtra(Constants.ACTIVITY_EXTRA);
 
-                  return;
+                    if (updatedActivities != null) {
+                        JSONObject daJSON = new JSONObject();
+
+                        for(DetectedActivity da: updatedActivities) {
+                            try {
+                                daJSON.put(Constants.getActivityString(da.getType()), da.getConfidence());
+                            } catch(JSONException e) {
+                                Log.e(TAG, "Error putting JSON value" + e);
+                            }
+                        }
+
+                        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, daJSON);
+                        pluginResult.setKeepCallback(true);
+                        detectedActivitiesCallback.sendPluginResult(pluginResult);
+                    }
                 }
-
-                JSONObject daJSON = new JSONObject();
-
-                for(DetectedActivity da: updatedActivities) {
-                  try {
-                    daJSON.put(Constants.getActivityString(da.getType()), da.getConfidence());
-                  } catch(JSONException e) {
-                    Log.e(TAG, "Error putting JSON value" + e);
-                  }
-                }
-
-                if(detectedActivitiesCallback != null) {
-                  PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, daJSON);
-                  pluginResult.setKeepCallback(true);
-                  detectedActivitiesCallback.sendPluginResult(pluginResult);
-                }
-              }
             });
           }
       }
@@ -117,30 +106,20 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, final Intent intent) {
-            final Bundle extras = intent.getExtras();
+            if (locationUpdateCallback == null) return;
 
-            if (extras == null) {
-              broadcastManager.unregisterReceiver(locationUpdateReceiver);
-            } else if (debug()) {
-              Toast.makeText(context, "We received a location update", Toast.LENGTH_SHORT).show();
-            }
+            cordova.getThreadPool().execute(new Runnable() {
+                public void run() {
+                    final Bundle extras = intent.getExtras();
 
-            if (locationUpdateCallback != null) {
-                cordova.getThreadPool().execute(new Runnable() {
-                    public void run() {
-                        if (extras == null) {
-                            detectedActivitiesCallback.error("Activity was killed");
-
-                            return;
-                        }
-
+                    if (extras != null) {
                         JSONObject data = locationToJSON(extras);
                         PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, data);
                         pluginResult.setKeepCallback(true);
                         locationUpdateCallback.sendPluginResult(pluginResult);
                     }
-                });
-            }
+                }
+            });
         }
     };
 
