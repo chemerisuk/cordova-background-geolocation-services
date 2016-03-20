@@ -178,6 +178,10 @@ public class BackgroundLocationUpdateService
             keepAwake = Boolean.parseBoolean(intent.getStringExtra("keepAwake"));
 
             if (keepAwake && !wakeLock.isHeld()) {
+                if (isDebugging) {
+                    Log.i(TAG, "- Asquire partial wake lock");
+                }
+
                 wakeLock.acquire();
             }
 
@@ -524,6 +528,10 @@ public class BackgroundLocationUpdateService
 
     private void cleanUp() {
         if (wakeLock.isHeld()) {
+            if (isDebugging) {
+                Log.i(TAG, "- release partial wake lock");
+            }
+
             wakeLock.release();
         }
 
