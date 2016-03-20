@@ -288,7 +288,9 @@ public class BackgroundLocationUpdateService
             (ArrayList<DetectedActivity>) result.getProbableActivities());
         broadcastManager.sendBroadcast(mIntent);
 
-        if(lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= 75 && isRecording) {
+        if (!isDetectingActivities) return;
+
+        if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= 75 && isRecording) {
             if (isDebugging) {
                 Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
             }
