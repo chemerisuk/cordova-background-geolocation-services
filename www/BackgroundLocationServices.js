@@ -14,7 +14,7 @@ module.exports = {
             notificationText    = config.notificationText  || "ENABLED",
             activityType        = config.activityType || "AutomotiveNavigation",
             activitiesInterval  = config.activitiesInterval || 0;
-            keepAwake           = false;
+            keepAwake           = config.keepAwake || false;
 
         exec(function() {},
              function() {},

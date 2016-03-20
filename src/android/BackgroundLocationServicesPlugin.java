@@ -194,7 +194,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             try {
-                // [distanceFilter, desiredAccuracy, interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, fences, url, params, headers]
+                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, keepAwake, activitiesInterval]
                 //  0               1                2         3                4                   5      6                   7                8              9
                 this.distanceFilter = data.getString(0);
                 this.desiredAccuracy = data.getString(1);
