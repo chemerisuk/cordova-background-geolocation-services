@@ -99,8 +99,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                     }
                 }
             });
-          }
-      }
+        }
     };
 
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
