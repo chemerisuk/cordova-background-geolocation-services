@@ -357,8 +357,6 @@ public class BackgroundLocationUpdateService
     }
 
     private void startLocationWatching() {
-        this.startRecordingOnConnect = true;
-
         if (googleClientAPI == null) {
             connectToPlayAPI();
         } else if (googleClientAPI.isConnected()) {
@@ -367,20 +365,22 @@ public class BackgroundLocationUpdateService
                     .setFastestInterval(fastestInterval)
                     .setInterval(interval)
                     .setSmallestDisplacement(distanceFilter);
-            LocationServices.FusedLocationApi.requestLocationUpdates(googleClientAPI, locationRequest, locationUpdatePI);
+
             this.isRecording = true;
+
+            LocationServices.FusedLocationApi.requestLocationUpdates(googleClientAPI, locationRequest, locationUpdatePI);
 
             if(isDebugging) {
                 Log.d(TAG, "- Recorder attached - start recording location updates");
             }
         } else {
-            googleClientAPI.connect();
+            if (this.startRecordingOnConnect) {
+                googleClientAPI.connect();
+            }
         }
     }
 
     private void stopLocationWatching() {
-        this.startRecordingOnConnect = false;
-
         if (googleClientAPI == null) {
             connectToPlayAPI();
         } else if (googleClientAPI.isConnected()) {
@@ -430,6 +430,8 @@ public class BackgroundLocationUpdateService
         Log.d(TAG, "- Connected to Play API -- All ready to record");
 
         if (this.startRecordingOnConnect) {
+            this.startRecordingOnConnect = false;
+
             startLocationWatching();
         } else {
             stopLocationWatching();
