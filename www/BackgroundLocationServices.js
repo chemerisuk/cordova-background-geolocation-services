@@ -13,14 +13,14 @@ module.exports = {
             notificationTitle   = config.notificationTitle || "Background tracking",
             notificationText    = config.notificationText  || "ENABLED",
             activityType        = config.activityType || "AutomotiveNavigation",
-            useActivityDetection = config.useActivityDetection || "false",
-            activitiesInterval =  config.activitiesInterval || 1000;
+            activitiesInterval  = config.activitiesInterval || 0;
+            keepAwake           = false;
 
         exec(function() {},
              function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, useActivityDetection, activitiesInterval]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, keepAwake, activitiesInterval]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {

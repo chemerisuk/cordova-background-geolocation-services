@@ -73,6 +73,8 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 
 //Detected Activities imports
 
@@ -93,7 +95,7 @@ public class BackgroundLocationUpdateService
 
     private Integer desiredAccuracy = 100;
     private Integer distanceFilter  = 30;
-    private Integer activitiesInterval = 1000;
+    private Integer activitiesInterval = 0;
 
     private static final Integer SECONDS_PER_MINUTE      = 60;
     private static final Integer MILLISECONDS_PER_SECOND = 60;
@@ -105,7 +107,8 @@ public class BackgroundLocationUpdateService
     private Boolean isDebugging;
     private String notificationTitle = "Background checking";
     private String notificationText = "ENABLED";
-    private Boolean useActivityDetection = false;
+    private Boolean keepAwake = false;
+    private WakeLock wakeLock;
 
     private Boolean isDetectingActivities = false;
     private Boolean isRecording = false;
@@ -150,6 +153,9 @@ public class BackgroundLocationUpdateService
         broadcastManager = LocalBroadcastManager.getInstance(this);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefsEditor = sharedPrefs.edit();
+
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
     }
 
     @Override
@@ -169,7 +175,11 @@ public class BackgroundLocationUpdateService
             notificationTitle = intent.getStringExtra("notificationTitle");
             notificationText = intent.getStringExtra("notificationText");
 
-            useActivityDetection = Boolean.parseBoolean(intent.getStringExtra("useActivityDetection"));
+            keepAwake = Boolean.parseBoolean(intent.getStringExtra("keepAwake"));
+
+            if (keepAwake && !wakeLock.isHeld()) {
+                wakeLock.acquire();
+            }
 
             // Build the notification
             Notification.Builder builder = new Notification.Builder(this)
@@ -194,7 +204,7 @@ public class BackgroundLocationUpdateService
 
             startForeground(startId, notification);
 
-            if (useActivityDetection) {
+            if (activitiesInterval > 0) {
                 startDetectingActivities();
             } else {
                 stopDetectingActivities();
@@ -213,7 +223,7 @@ public class BackgroundLocationUpdateService
         Log.i(TAG, "- isDebugging: "        + isDebugging);
         Log.i(TAG, "- notificationTitle: "  + notificationTitle);
         Log.i(TAG, "- notificationText: "   + notificationText);
-        Log.i(TAG, "- useActivityDetection: "   + useActivityDetection);
+        Log.i(TAG, "- keepAwake: "   + keepAwake);
         Log.i(TAG, "- activityDetectionInterval: "   + activitiesInterval);
 
         //We want this service to continue running until it is explicitly stopped
@@ -388,10 +398,10 @@ public class BackgroundLocationUpdateService
     private void startDetectingActivities() {
         if (!isDetectingActivities && googleClientAPI != null) {
             if (!googleClientAPI.isConnected()) {
-                if (useActivityDetection) {
+                if (activitiesInterval > 0) {
                     googleClientAPI.connect();
                 }
-            } else if (useActivityDetection) {
+            } else if (activitiesInterval > 0) {
                 isDetectingActivities = true;
 
                 ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
@@ -425,7 +435,7 @@ public class BackgroundLocationUpdateService
             stopLocationWatching();
         }
 
-        if (useActivityDetection) {
+        if (activitiesInterval > 0) {
             startDetectingActivities();
         }
     }
@@ -509,6 +519,10 @@ public class BackgroundLocationUpdateService
     }
 
     private void cleanUp() {
+        if (wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+
         stopLocationWatching();
         stopDetectingActivities();
 

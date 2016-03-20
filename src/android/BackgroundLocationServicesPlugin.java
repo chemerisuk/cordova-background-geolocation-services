@@ -55,13 +55,13 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private String interval = "300000";
     private String fastestInterval = "60000";
     private String aggressiveInterval = "4000";
-    private String activitiesInterval = "1000";
+    private String activitiesInterval = "0";
 
     private String distanceFilter = "30";
     private String isDebugging = "false";
     private String notificationTitle = "Location Tracking";
     private String notificationText = "ENABLED";
-    private String useActivityDetection = "false";
+    private String keepAwake = "false";
 
     private CallbackContext locationUpdateCallback = null;
     private CallbackContext detectedActivitiesCallback = null;
@@ -183,7 +183,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             updateServiceIntent.putExtra("fastestInterval", fastestInterval);
             updateServiceIntent.putExtra("aggressiveInterval", aggressiveInterval);
             updateServiceIntent.putExtra("activitiesInterval", activitiesInterval);
-            updateServiceIntent.putExtra("useActivityDetection", useActivityDetection);
+            updateServiceIntent.putExtra("keepAwake", keepAwake);
 
             bindServiceToWebview(activity, updateServiceIntent);
 
@@ -205,7 +205,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 this.notificationTitle = data.getString(6);
                 this.notificationText = data.getString(7);
                 //this.activityType = data.getString(8);
-                this.useActivityDetection = data.getString(9);
+                this.keepAwake = data.getString(9);
                 this.activitiesInterval = data.getString(10);
             } catch (JSONException e) {
                 callbackContext.error("JSON Exception" + e.getMessage());
