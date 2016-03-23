@@ -109,10 +109,10 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    final Bundle extras = intent.getExtras();
+                    Location location = intent.getParcelableExtra(Constants.LOCATION_EXTRA);
 
-                    if (extras != null) {
-                        JSONObject data = locationToJSON(extras);
+                    if (location != null) {
+                        JSONObject data = locationToJSON(location);
                         PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, data);
                         pluginResult.setKeepCallback(true);
                         locationUpdateCallback.sendPluginResult(pluginResult);
@@ -314,16 +314,16 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     //     }
     // }
 
-    private JSONObject locationToJSON(Bundle b) {
+    private JSONObject locationToJSON(Location location) {
         JSONObject data = new JSONObject();
         try {
-            data.put("latitude", b.getDouble("latitude"));
-            data.put("longitude", b.getDouble("longitude"));
-            data.put("accuracy", b.getDouble("accuracy"));
-            data.put("altitude", b.getDouble("altitude"));
-            data.put("timestamp", b.getDouble("timestamp"));
-            data.put("speed", b.getDouble("speed"));
-            data.put("heading", b.getDouble("heading"));
+            data.put("latitude", location.getLatitude());
+            data.put("longitude", location.getLongitude());
+            data.put("accuracy", location.getAccuracy());
+            data.put("altitude", location.getAltitude());
+            data.put("timestamp", location.getTime());
+            data.put("speed", location.getSpeed());
+            data.put("heading", location.getBearing());
         } catch(JSONException e) {
             Log.d(TAG, "ERROR CREATING JSON" + e);
         }

@@ -48,6 +48,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderApi;
@@ -268,7 +269,7 @@ public class BackgroundLocationUpdateService
 
                 //This is all for setting the callback for android which currently does not work
                 Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
-                localIntent.putExtras(createLocationBundle(lastLocation));
+                localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
                 broadcastManager.sendBroadcast(localIntent);
 
                 recordLocations(result);
@@ -529,7 +530,7 @@ public class BackgroundLocationUpdateService
     private void cleanUp() {
         if (wakeLock.isHeld()) {
             if (isDebugging) {
-                Log.i(TAG, "- release partial wake lock");
+                Log.i(TAG, "- Release partial wake lock");
             }
 
             wakeLock.release();

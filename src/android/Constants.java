@@ -19,6 +19,7 @@ public class Constants {
   public static final String CALLBACK_LOCATION_UPDATE = P_NAME + "CALLBACK_LOCATION_UPDATE";
   public static final String CALLBACK_ACTIVITY_UPDATE = P_NAME + "CALLBACK_ACTIVITY_UPDATE";
   public static final String ACTIVITY_EXTRA = P_NAME + ".ACTIVITY_EXTRA";
+  public static final String LOCATION_EXTRA = P_NAME + ".LOCATION_EXTRA";
 
   //Receiver paths for service
   public static String LOCATION_UPDATE = P_NAME + "LOCATION_UPDATE";
