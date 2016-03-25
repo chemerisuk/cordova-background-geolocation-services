@@ -62,6 +62,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private String notificationTitle = "Location Tracking";
     private String notificationText = "ENABLED";
     private String keepAwake = "false";
+    private String keepAlive = "false";
 
     private CallbackContext locationUpdateCallback = null;
     private CallbackContext detectedActivitiesCallback = null;
@@ -162,6 +163,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             updateServiceIntent.putExtra("aggressiveInterval", aggressiveInterval);
             updateServiceIntent.putExtra("activitiesInterval", activitiesInterval);
             updateServiceIntent.putExtra("keepAwake", keepAwake);
+            updateServiceIntent.putExtra("keepAlive", keepAlive);
 
             bindServiceToWebview(activity, updateServiceIntent);
 
@@ -172,8 +174,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             try {
-                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, keepAwake, activitiesInterval]
-                //  0               1                2         3                4                   5      6                   7                8              9
+                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval]
+                //  0               1                2         3                4                   5      6                   7                8           9          10
                 this.distanceFilter = data.getString(0);
                 this.desiredAccuracy = data.getString(1);
                 this.interval = data.getString(2);
@@ -182,7 +184,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 this.isDebugging = data.getString(5);
                 this.notificationTitle = data.getString(6);
                 this.notificationText = data.getString(7);
-                //this.activityType = data.getString(8);
+                this.keepAlive = data.getString(8);
                 this.keepAwake = data.getString(9);
                 this.activitiesInterval = data.getString(10);
 
@@ -206,29 +208,13 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
           callbackContext.success();
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
-          JSONArray track = new JSONArray();
+            final CallbackContext cb = callbackContext;
 
-          if (sharedPrefs.contains("??")) {
-            int n = sharedPrefs.getInt("??", -1);
-
-            try {
-              for (int i = 0; i < n; ++i) {
-                if (sharedPrefs.contains("?" + i)) {
-                  JSONObject entry = new JSONObject();
-
-                  entry.put("x", sharedPrefs.getInt("?" + i++, 0));
-                  entry.put("y", sharedPrefs.getInt("?" + i++, 0));
-                  entry.put("t", sharedPrefs.getLong("?" + i, 0));
-
-                  track.put(entry);
+            cordova.getThreadPool().execute(new Runnable() {
+                public void run() {
+                    serializeTrack(cb);
                 }
-              }
-
-              callbackContext.success(track);
-            } catch (JSONException ex) {
-              callbackContext.error(ex.getMessage());
-            }
-          }
+            });
         } else {
           result = false;
         }
@@ -254,6 +240,32 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
         sharedPrefsEditor.remove("??");
         sharedPrefsEditor.commit();
+    }
+
+    private void serializeTrack(CallbackContext callbackContext) {
+        JSONArray track = new JSONArray();
+
+        if (sharedPrefs.contains("??")) {
+            int n = sharedPrefs.getInt("??", -1);
+
+            try {
+                for (int i = 0; i < n; ++i) {
+                    if (sharedPrefs.contains("?" + i)) {
+                        JSONObject entry = new JSONObject();
+
+                        entry.put("x", sharedPrefs.getInt("?" + i++, 0));
+                        entry.put("y", sharedPrefs.getInt("?" + i++, 0));
+                        entry.put("t", sharedPrefs.getLong("?" + i, 0));
+
+                        track.put(entry);
+                    }
+                }
+
+                callbackContext.success(track);
+            } catch (JSONException ex) {
+                callbackContext.error(ex.getMessage());
+            }
+        }
     }
 
     public String getApplicationName(Context context) {
@@ -282,7 +294,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private void unbindServiceFromWebview(Context context, Intent intent, boolean stopService) {
         if (!isEnabled) return;
 
-        if (stopService || sharedPrefs.getInt("??", -1) < 0) {
+        if (stopService || keepAlive == "false" && sharedPrefs.getInt("??", -1) < 0) {
             context.stopService(intent);
         }
 

@@ -12,7 +12,7 @@ module.exports = {
             debug               = config.debug || false,
             notificationTitle   = config.notificationTitle || "Background tracking",
             notificationText    = config.notificationText  || "ENABLED",
-            activityType        = config.activityType || "AutomotiveNavigation",
+            keepAlive           = config.keepAlive || false,
             activitiesInterval  = config.activitiesInterval || 0;
             keepAwake           = config.keepAwake || false;
 
@@ -20,7 +20,7 @@ module.exports = {
              failure || function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, activityType, keepAwake, activitiesInterval]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {

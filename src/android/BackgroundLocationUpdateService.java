@@ -109,6 +109,7 @@ public class BackgroundLocationUpdateService
     private String notificationTitle = "Background checking";
     private String notificationText = "ENABLED";
     private Boolean keepAwake = false;
+    private Boolean keepAlive = false;
     private WakeLock wakeLock;
 
     private Boolean isDetectingActivities = false;
@@ -176,6 +177,7 @@ public class BackgroundLocationUpdateService
             notificationTitle = intent.getStringExtra("notificationTitle");
             notificationText = intent.getStringExtra("notificationText");
 
+            keepAlive = Boolean.parseBoolean(intent.getStringExtra("keepAlive"));
             keepAwake = Boolean.parseBoolean(intent.getStringExtra("keepAwake"));
 
             if (keepAwake && !wakeLock.isHeld()) {
@@ -228,6 +230,7 @@ public class BackgroundLocationUpdateService
         Log.i(TAG, "- isDebugging: "        + isDebugging);
         Log.i(TAG, "- notificationTitle: "  + notificationTitle);
         Log.i(TAG, "- notificationText: "   + notificationText);
+        Log.i(TAG, "- keepAlive: "   + keepAlive);
         Log.i(TAG, "- keepAwake: "   + keepAwake);
         Log.i(TAG, "- activityDetectionInterval: "   + activitiesInterval);
 
@@ -553,7 +556,7 @@ public class BackgroundLocationUpdateService
     public void onTaskRemoved(Intent rootIntent) {
         int n = sharedPrefs.getInt("??", -1);
 
-        if (n == -1) {
+        if (!keepAlive && n == -1) {
             Log.w(TAG, "Application killed from task manager - Cleaning up");
 
             stopSelf();
