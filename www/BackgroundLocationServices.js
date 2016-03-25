@@ -13,7 +13,7 @@ module.exports = {
             notificationTitle   = config.notificationTitle || "Background tracking",
             notificationText    = config.notificationText  || "ENABLED",
             keepAlive           = config.keepAlive || false,
-            activitiesInterval  = config.activitiesInterval || 0;
+            activitiesInterval  = config.activitiesInterval || 0,
             keepAwake           = config.keepAwake || false;
 
         exec(success || function() {},
