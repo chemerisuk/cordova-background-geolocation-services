@@ -343,19 +343,6 @@ public class BackgroundLocationUpdateService
         return notification.setContentIntent(contentIntent);
     }
 
-    private Bundle createLocationBundle(Location location) {
-      Bundle b = new Bundle();
-      b.putDouble("latitude", location.getLatitude());
-      b.putDouble("longitude", location.getLongitude());
-      b.putDouble("accuracy", location.getAccuracy());
-      b.putDouble("altitude", location.getAltitude());
-      b.putDouble("timestamp", location.getTime());
-      b.putDouble("speed", location.getSpeed());
-      b.putDouble("heading", location.getBearing());
-
-      return b;
-    }
-
     protected synchronized void connectToPlayAPI() {
         googleClientAPI = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
