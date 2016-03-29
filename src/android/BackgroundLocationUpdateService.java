@@ -529,6 +529,8 @@ public class BackgroundLocationUpdateService
 
         if (googleClientAPI != null) {
             googleClientAPI.disconnect();
+
+            googleClientAPI = null;
         }
 
         stopForeground(true);
