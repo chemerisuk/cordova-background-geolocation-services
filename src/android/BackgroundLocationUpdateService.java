@@ -513,8 +513,6 @@ public class BackgroundLocationUpdateService
         Log.w(TAG, "Destroyed Location Update Service - Cleaning up");
 
         cleanUp();
-
-        super.onDestroy();
     }
 
     private void cleanUp() {
@@ -529,13 +527,22 @@ public class BackgroundLocationUpdateService
         stopLocationWatching();
         stopDetectingActivities();
 
-        unregisterReceiver(locationUpdateReceiver);
-        unregisterReceiver(detectedActivitiesReceiver);
+        if (googleClientAPI != null) {
+            googleClientAPI.disconnect();
+        }
 
         stopForeground(true);
 
-        if (googleClientAPI != null) {
-            googleClientAPI.disconnect();
+        if (locationUpdateReceiver != null) {
+            unregisterReceiver(locationUpdateReceiver);
+
+            locationUpdateReceiver = null;
+        }
+
+        if (detectedActivitiesReceiver != null) {
+            unregisterReceiver(detectedActivitiesReceiver);
+
+            detectedActivitiesReceiver = null;
         }
     }
 
