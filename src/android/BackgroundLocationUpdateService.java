@@ -143,7 +143,7 @@ public class BackgroundLocationUpdateService extends Service implements
             // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
             locationUpdateIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
-        locationUpdatePI = PendingIntent.getBroadcast(this, 9001, locationUpdateIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        locationUpdatePI = PendingIntent.getBroadcast(this, 9001, locationUpdateIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.LOCATION_UPDATE));
 
         Intent detectedActivitiesIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
@@ -151,7 +151,7 @@ public class BackgroundLocationUpdateService extends Service implements
             // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
             detectedActivitiesIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
-        detectedActivitiesPI = PendingIntent.getBroadcast(this, 9002, detectedActivitiesIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        detectedActivitiesPI = PendingIntent.getBroadcast(this, 9002, detectedActivitiesIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE));
 
         broadcastManager = LocalBroadcastManager.getInstance(this);
@@ -452,7 +452,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
     @Override
     public void onConnectionSuspended(int cause) {
-        // googleClientAPI.connect();
+        Log.e(TAG, "GoogleApiClient connection has been suspend");
     }
 
     /**
