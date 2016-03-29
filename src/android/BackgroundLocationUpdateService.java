@@ -47,6 +47,8 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
@@ -79,9 +81,9 @@ import android.os.PowerManager.WakeLock;
 
 //Detected Activities imports
 
-public class BackgroundLocationUpdateService
-        extends Service
-        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class BackgroundLocationUpdateService extends Service implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "BackgroundLocationUpdateService";
 
@@ -344,13 +346,18 @@ public class BackgroundLocationUpdateService
     }
 
     protected synchronized void connectToPlayAPI() {
-        googleClientAPI = new GoogleApiClient.Builder(this)
+        if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
+            googleClientAPI = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .addApi(ActivityRecognition.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-        googleClientAPI.connect();
+
+            if (!googleClientAPI.isConnected() || !googleClientAPI.isConnecting()) {
+                googleClientAPI.connect();
+            }
+        }
     }
 
     private void startLocationWatching() {
@@ -378,17 +385,16 @@ public class BackgroundLocationUpdateService
     }
 
     private void stopLocationWatching() {
-        if (googleClientAPI == null) {
-            connectToPlayAPI();
-        } else if (googleClientAPI.isConnected()) {
+        if (this.isRecording && googleClientAPI != null && googleClientAPI.isConnected()) {
             //flush the location updates from the api
-            LocationServices.FusedLocationApi.removeLocationUpdates(googleClientAPI, locationUpdatePI);
+            LocationServices.FusedLocationApi.removeLocationUpdates(
+                googleClientAPI, locationUpdatePI);
+
             this.isRecording = false;
-            if(isDebugging) {
+
+            if (isDebugging) {
                 Log.w(TAG, "- Recorder detached - stop recording location updates");
             }
-        } else {
-            googleClientAPI.connect();
         }
     }
 
@@ -410,13 +416,13 @@ public class BackgroundLocationUpdateService
     }
 
     private void stopDetectingActivities() {
-        if (isDetectingActivities && googleClientAPI != null) {
+        if (isDetectingActivities && googleClientAPI != null && googleClientAPI.isConnected()) {
+            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(
+                googleClientAPI, detectedActivitiesPI);
+
             isDetectingActivities = false;
 
-            if (googleClientAPI.isConnected()) {
-                ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(
-                    googleClientAPI, detectedActivitiesPI);
-
+            if (isDebugging) {
                 Log.d(TAG, "- Activity Listener unregistered");
             }
         }
@@ -527,7 +533,7 @@ public class BackgroundLocationUpdateService
         stopLocationWatching();
         stopDetectingActivities();
 
-        if (googleClientAPI != null) {
+        if (googleClientAPI != null && googleClientAPI.isConnected()) {
             googleClientAPI.disconnect();
 
             googleClientAPI = null;
