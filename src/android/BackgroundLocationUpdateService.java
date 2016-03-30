@@ -31,7 +31,6 @@ import android.content.BroadcastReceiver;
 
 import android.location.Location;
 import android.location.Criteria;
-import android.location.LocationListener;
 import android.location.LocationManager;
 
 import android.net.ConnectivityManager;
@@ -49,6 +48,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
@@ -82,17 +82,16 @@ import android.os.PowerManager.WakeLock;
 //Detected Activities imports
 
 public class BackgroundLocationUpdateService extends Service implements
+        LocationListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
     private static final String TAG = "BackgroundLocationUpdateService";
 
-    private Location lastLocation;
-    private DetectedActivity lastActivity;
     private long lastUpdateTime = 0l;
     private Boolean fastestSpeed = false;
 
-    private PendingIntent locationUpdatePI;
+    // private PendingIntent locationUpdatePI;
     private GoogleApiClient googleClientAPI;
     private PendingIntent detectedActivitiesPI;
 
@@ -138,13 +137,13 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "OnCreate");
 
         // Location Update PI
-        Intent locationUpdateIntent = new Intent(Constants.LOCATION_UPDATE);
-        if (Build.VERSION.SDK_INT >= 16) {
-            // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
-            locationUpdateIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        }
-        locationUpdatePI = PendingIntent.getBroadcast(this, 9001, locationUpdateIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.LOCATION_UPDATE));
+        // Intent locationUpdateIntent = new Intent(Constants.LOCATION_UPDATE);
+        // if (Build.VERSION.SDK_INT >= 16) {
+        //     // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
+        //     locationUpdateIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        // }
+        // locationUpdatePI = PendingIntent.getBroadcast(this, 9001, locationUpdateIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        // registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.LOCATION_UPDATE));
 
         Intent detectedActivitiesIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
         if (Build.VERSION.SDK_INT >= 16) {
@@ -260,34 +259,52 @@ public class BackgroundLocationUpdateService extends Service implements
     /**
      * Broadcast receiver for receiving a single-update from LocationManager.
      */
-    private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            LocationResult result = LocationResult.extractResult(intent);
+    // private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
+    //     @Override
+    //     public void onReceive(Context context, Intent intent) {
+    //         LocationResult result = LocationResult.extractResult(intent);
 
-            if (result != null) {
-                lastLocation = result.getLastLocation();
+    //         if (result != null) {
+    //             lastLocation = result.getLastLocation();
 
-                if(isDebugging) {
-                    Log.d(TAG, "- locationUpdateReceiver: " + lastLocation);
-                }
+    //             if(isDebugging) {
+    //                 Log.d(TAG, "- locationUpdateReceiver: " + lastLocation);
+    //             }
 
-                //This is all for setting the callback for android which currently does not work
-                Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
-                localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
-                broadcastManager.sendBroadcast(localIntent);
+    //             //This is all for setting the callback for android which currently does not work
+    //             Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
+    //             localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
+    //             broadcastManager.sendBroadcast(localIntent);
 
-                recordLocations(result);
-            }
+    //             recordLocations(result);
+    //         }
+    //     }
+    // };
+
+    /**
+     * Called when the location has changed.
+     *
+     * @param location
+     */
+    @Override
+    public void onLocationChanged(Location lastLocation) {
+        if (isDebugging) {
+            Log.d(TAG, "- locationUpdateReceiver: " + lastLocation);
         }
-    };
+
+        //This is all for setting the callback for android which currently does not work
+        Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
+        localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
+        broadcastManager.sendBroadcast(localIntent);
+
+        recordLocations(lastLocation);
+    }
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-
-        lastActivity = result.getMostProbableActivity();
+        DetectedActivity lastActivity = result.getMostProbableActivity();
 
         if (isDebugging) {
             Log.w(TAG, "MOST LIKELY ACTIVITY: " + Constants.getActivityString(lastActivity.getType()) + " " + lastActivity.getConfidence());
@@ -372,7 +389,8 @@ public class BackgroundLocationUpdateService extends Service implements
 
             this.isRecording = true;
 
-            LocationServices.FusedLocationApi.requestLocationUpdates(googleClientAPI, locationRequest, locationUpdatePI);
+            LocationServices.FusedLocationApi.requestLocationUpdates(
+                googleClientAPI, locationRequest, this);
 
             if(isDebugging) {
                 Log.d(TAG, "- Recorder attached - start recording location updates");
@@ -388,7 +406,7 @@ public class BackgroundLocationUpdateService extends Service implements
         if (this.isRecording && googleClientAPI != null && googleClientAPI.isConnected()) {
             //flush the location updates from the api
             LocationServices.FusedLocationApi.removeLocationUpdates(
-                googleClientAPI, locationUpdatePI);
+                googleClientAPI, this);
 
             this.isRecording = false;
 
@@ -476,13 +494,13 @@ public class BackgroundLocationUpdateService extends Service implements
         return accuracy;
     }
 
-    private int recordLocations(LocationResult result) {
+    private int recordLocations(Location location) {
         int locationsCount = 0;
         int n = sharedPrefs.getInt("??", -1);
 
         if (n < 0) return locationsCount;
 
-        for (Location location : result.getLocations()) {
+        // for (Location location : result.getLocations()) {
             int ilat = (int)(location.getLatitude() * 100000);
             int ilng = (int)(location.getLongitude() * 100000);
 
@@ -500,7 +518,7 @@ public class BackgroundLocationUpdateService extends Service implements
             sharedPrefsEditor.putLong("?" + n++, timestamp);
 
             ++locationsCount;
-        }
+        // }
 
         if (locationsCount > 0) {
             sharedPrefsEditor.putInt("??", n);
@@ -541,11 +559,11 @@ public class BackgroundLocationUpdateService extends Service implements
 
         stopForeground(true);
 
-        if (locationUpdateReceiver != null) {
-            unregisterReceiver(locationUpdateReceiver);
+        // if (locationUpdateReceiver != null) {
+        //     unregisterReceiver(locationUpdateReceiver);
 
-            locationUpdateReceiver = null;
-        }
+        //     locationUpdateReceiver = null;
+        // }
 
         if (detectedActivitiesReceiver != null) {
             unregisterReceiver(detectedActivitiesReceiver);
