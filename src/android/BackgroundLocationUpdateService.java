@@ -540,14 +540,6 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void cleanUp() {
-        if (wakeLock.isHeld()) {
-            if (isDebugging) {
-                Log.i(TAG, "- Release partial wake lock");
-            }
-
-            wakeLock.release();
-        }
-
         stopLocationWatching();
         stopDetectingActivities();
 
@@ -569,6 +561,14 @@ public class BackgroundLocationUpdateService extends Service implements
             unregisterReceiver(detectedActivitiesReceiver);
 
             detectedActivitiesReceiver = null;
+        }
+
+        if (wakeLock.isHeld()) {
+            if (isDebugging) {
+                Log.i(TAG, "- Release partial wake lock");
+            }
+
+            wakeLock.release();
         }
     }
 
