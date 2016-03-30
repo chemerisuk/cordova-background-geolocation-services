@@ -112,7 +112,6 @@ public class BackgroundLocationUpdateService extends Service implements
     private Boolean isDebugging;
     private String notificationTitle = "Background checking";
     private String notificationText = "ENABLED";
-    private Boolean keepAwake = false;
     private Boolean keepAlive = false;
     private WakeLock wakeLock;
 
@@ -161,6 +160,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+        wakeLock.acquire();
     }
 
     @Override
@@ -181,15 +181,6 @@ public class BackgroundLocationUpdateService extends Service implements
             notificationText = intent.getStringExtra("notificationText");
 
             keepAlive = Boolean.parseBoolean(intent.getStringExtra("keepAlive"));
-            keepAwake = Boolean.parseBoolean(intent.getStringExtra("keepAwake"));
-
-            if (keepAwake && !wakeLock.isHeld()) {
-                if (isDebugging) {
-                    Log.i(TAG, "- Asquire partial wake lock");
-                }
-
-                wakeLock.acquire();
-            }
 
             // Build the notification
             Notification.Builder builder = new Notification.Builder(this)
@@ -234,7 +225,6 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "- notificationTitle: "  + notificationTitle);
         Log.i(TAG, "- notificationText: "   + notificationText);
         Log.i(TAG, "- keepAlive: "   + keepAlive);
-        Log.i(TAG, "- keepAwake: "   + keepAwake);
         Log.i(TAG, "- activityDetectionInterval: "   + activitiesInterval);
 
         //We want this service to continue running until it is explicitly stopped
@@ -257,31 +247,6 @@ public class BackgroundLocationUpdateService extends Service implements
 
         return resId;
     }
-
-    /**
-     * Broadcast receiver for receiving a single-update from LocationManager.
-     */
-    // private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
-    //     @Override
-    //     public void onReceive(Context context, Intent intent) {
-    //         LocationResult result = LocationResult.extractResult(intent);
-
-    //         if (result != null) {
-    //             lastLocation = result.getLastLocation();
-
-    //             if(isDebugging) {
-    //                 Log.d(TAG, "- locationUpdateReceiver: " + lastLocation);
-    //             }
-
-    //             //This is all for setting the callback for android which currently does not work
-    //             Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
-    //             localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
-    //             broadcastManager.sendBroadcast(localIntent);
-
-    //             recordLocations(result);
-    //         }
-    //     }
-    // };
 
     /**
      * Called when the location has changed.
@@ -553,27 +518,15 @@ public class BackgroundLocationUpdateService extends Service implements
 
         stopForeground(true);
 
-        // if (locationUpdateReceiver != null) {
-        //     unregisterReceiver(locationUpdateReceiver);
-
-        //     locationUpdateReceiver = null;
-        // }
-
         if (detectedActivitiesReceiver != null) {
             unregisterReceiver(detectedActivitiesReceiver);
 
             detectedActivitiesReceiver = null;
         }
 
-        if (wakeLock.isHeld()) {
-            if (isDebugging) {
-                Log.i(TAG, "- Release partial wake lock");
-            }
-
-            wakeLock.release();
-        }
-
         serviceLooper.quit();
+
+        wakeLock.release();
     }
 
     @Override
