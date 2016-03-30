@@ -42,6 +42,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 
 import android.util.Log;
 import android.widget.Toast;
@@ -118,6 +121,8 @@ public class BackgroundLocationUpdateService extends Service implements
     private boolean startRecordingOnConnect = true;
 
     private LocationRequest locationRequest;
+    private volatile Looper serviceLooper;
+    private volatile Handler serviceHandler;
 
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
@@ -136,14 +141,11 @@ public class BackgroundLocationUpdateService extends Service implements
         super.onCreate();
         Log.i(TAG, "OnCreate");
 
-        // Location Update PI
-        // Intent locationUpdateIntent = new Intent(Constants.LOCATION_UPDATE);
-        // if (Build.VERSION.SDK_INT >= 16) {
-        //     // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
-        //     locationUpdateIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        // }
-        // locationUpdatePI = PendingIntent.getBroadcast(this, 9001, locationUpdateIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        // registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.LOCATION_UPDATE));
+        HandlerThread thread = new HandlerThread("HandlerThread[" + TAG + "]");
+        thread.start();
+
+        serviceLooper = thread.getLooper();
+        serviceHandler = new Handler(serviceLooper);
 
         Intent detectedActivitiesIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
         if (Build.VERSION.SDK_INT >= 16) {
@@ -151,7 +153,7 @@ public class BackgroundLocationUpdateService extends Service implements
             detectedActivitiesIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
         detectedActivitiesPI = PendingIntent.getBroadcast(this, 9002, detectedActivitiesIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE));
+        registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE), null, serviceHandler);
 
         broadcastManager = LocalBroadcastManager.getInstance(this);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -390,7 +392,7 @@ public class BackgroundLocationUpdateService extends Service implements
             this.isRecording = true;
 
             LocationServices.FusedLocationApi.requestLocationUpdates(
-                googleClientAPI, locationRequest, this);
+                googleClientAPI, locationRequest, this, serviceLooper);
 
             if(isDebugging) {
                 Log.d(TAG, "- Recorder attached - start recording location updates");
@@ -570,6 +572,8 @@ public class BackgroundLocationUpdateService extends Service implements
 
             wakeLock.release();
         }
+
+        serviceLooper.quit();
     }
 
     @Override
