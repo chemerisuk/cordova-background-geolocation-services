@@ -284,13 +284,15 @@ public class BackgroundLocationUpdateService extends Service implements
 
         if (!isDetectingActivities) return;
 
-        if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= 75 && isRecording) {
-            if (isDebugging) {
-                Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
-            }
+        if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= 75) {
+            if (isRecording) {
+                if (isDebugging) {
+                    Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
+                }
 
-            stopLocationWatching();
-        } else if(lastActivity.getType() != DetectedActivity.STILL && !isRecording) {
+                stopLocationWatching();
+            }
+        } else if (!isRecording) {
             if (isDebugging) {
                 Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
             }
