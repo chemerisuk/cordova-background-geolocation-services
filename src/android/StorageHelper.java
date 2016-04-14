@@ -136,7 +136,9 @@ public class StorageHelper extends SQLiteOpenHelper {
                 JSONArray results = serialize();
                 int resultsCount = results.length();
 
-                if (resultsCount > 0) {
+                if (resultsCount == 0) {
+                    scheduler.shutdown();
+                } else {
                     Log.d(TAG, "- sending " + resultsCount + " records to server");
 
                     HttpURLConnection http = null;
@@ -166,9 +168,8 @@ public class StorageHelper extends SQLiteOpenHelper {
                         }
                     }
                 }
-                // Log.d(TAG, "- send local states to server" + results);
             }
-        }, 15, this.syncInterval, TimeUnit.SECONDS);
+        }, 30, this.syncInterval, TimeUnit.SECONDS);
     }
 
     public void stopSync() {
