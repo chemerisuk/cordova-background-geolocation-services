@@ -118,8 +118,9 @@ public class BackgroundLocationUpdateService extends Service implements
     private Boolean isDebugging;
     private String notificationTitle = "Background checking";
     private String notificationText = "ENABLED";
-    private Boolean keepAlive = false;
     private WakeLock wakeLock;
+    private String syncUrl;
+    private int syncInterval;
 
     private Boolean isDetectingActivities = false;
     private Boolean isRecording = false;
@@ -169,6 +170,7 @@ public class BackgroundLocationUpdateService extends Service implements
         wakeLock.acquire();
 
         batteryStatusFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        lastActivity  = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
     }
 
     @Override
@@ -183,13 +185,14 @@ public class BackgroundLocationUpdateService extends Service implements
             fastestInterval      = Integer.parseInt(intent.getStringExtra("fastestInterval"));
             aggressiveInterval   = Integer.parseInt(intent.getStringExtra("aggressiveInterval"));
             activitiesInterval   = Integer.parseInt(intent.getStringExtra("activitiesInterval"));
-            // activitiesConfidence = Integer.parseInt(intent.getStringExtra("activitiesConfidence"));
+            activitiesConfidence = Integer.parseInt(intent.getStringExtra("activitiesConfidence"));
 
             isDebugging = Boolean.parseBoolean(intent.getStringExtra("isDebugging"));
             notificationTitle = intent.getStringExtra("notificationTitle");
             notificationText = intent.getStringExtra("notificationText");
 
-            keepAlive = Boolean.parseBoolean(intent.getStringExtra("keepAlive"));
+            syncUrl = intent.getStringExtra("syncUrl");
+            syncInterval = Integer.parseInt(intent.getStringExtra("syncInterval"));
 
             // Build the notification
             Notification.Builder builder = new Notification.Builder(this)
@@ -214,6 +217,12 @@ public class BackgroundLocationUpdateService extends Service implements
 
             startForeground(startId, notification);
 
+            if (storageHelper != null) {
+                storageHelper.stopSync();
+            }
+
+            storageHelper = new StorageHelper(this, syncUrl, syncInterval);
+
             if (activitiesInterval > 0) {
                 startDetectingActivities();
             } else {
@@ -221,9 +230,6 @@ public class BackgroundLocationUpdateService extends Service implements
             }
 
             startLocationWatching();
-
-            storageHelper = new StorageHelper(this, "http://192.168.1.3/booking/debug", 30);
-            lastActivity  = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
         }
 
         // Log.i(TAG, "- url: " + url);
@@ -236,9 +242,10 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "- isDebugging: "        + isDebugging);
         Log.i(TAG, "- notificationTitle: "  + notificationTitle);
         Log.i(TAG, "- notificationText: "   + notificationText);
-        Log.i(TAG, "- keepAlive: "   + keepAlive);
         Log.i(TAG, "- activitiesInterval: "   + activitiesInterval);
         Log.i(TAG, "- activitiesConfidence: "   + activitiesConfidence);
+        Log.i(TAG, "- syncUrl: "  + syncUrl);
+        Log.i(TAG, "- syncInterval: "   + syncInterval);
 
         //We want this service to continue running until it is explicitly stopped
         return START_REDELIVER_INTENT;
@@ -562,7 +569,7 @@ public class BackgroundLocationUpdateService extends Service implements
     public void onTaskRemoved(Intent rootIntent) {
         int n = sharedPrefs.getInt("??", -1);
 
-        if (!keepAlive && n == -1) {
+        if (n == -1) {
             Log.w(TAG, "Application killed from task manager - Cleaning up");
 
             stopSelf();

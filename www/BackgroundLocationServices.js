@@ -14,14 +14,16 @@ module.exports = {
             notificationText    = config.notificationText  || "ENABLED",
             keepAlive           = config.keepAlive || false,
             activitiesInterval  = config.activitiesInterval || 0,
-            activitiesConfidence = config.activitiesConfidence || 0,
+            activitiesConfidence = config.activitiesConfidence || 75,
             keepAwake           = config.keepAwake || false;
+            syncUrl             = config.syncUrl || "";
+            syncInterval        = config.syncInterval || 600;
 
         exec(success || function() {},
              failure || function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {
