@@ -50,16 +50,12 @@ public class StorageHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        String query;
-        query = "CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading REAL, activity_type TEXT, activity_confidence INTEGER, battery_level INTEGER, battery_charging BOOLEAN, recorded_at DATETIME, created_at DATETIME)";
-        database.execSQL(query);
+        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading REAL, activity_type TEXT, activity_confidence INTEGER, battery_level INTEGER, battery_charging BOOLEAN, recorded_at DATETIME, created_at DATETIME)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase database, int version_old, int current_version) {
-        String query;
-        query = "DROP TABLE IF EXISTS states";
-        database.execSQL(query);
+        database.execSQL("DROP TABLE IF EXISTS states");
         onCreate(database);
     }
 
@@ -88,42 +84,47 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("created_at", System.currentTimeMillis());
 
         database.insert("states", null, values);
-        database.close();
     }
 
     private JSONArray serialize() {
         String selectQuery = "SELECT * FROM states ORDER BY created_at ASC LIMIT 100";
-        SQLiteDatabase database = this.getWritableDatabase();
+        SQLiteDatabase database = this.getReadableDatabase();
         Cursor cursor = database.rawQuery(selectQuery, null);
         JSONArray results = new JSONArray();
 
-        if (cursor.moveToFirst()) {
-            Log.d(TAG, "- serializing " + cursor.getCount() + " records with server");
+        try {
+            if (cursor.moveToFirst()) {
+                Log.d(TAG, "- serializing " + cursor.getCount() + " records with server");
 
-            do {
-                JSONObject state = new JSONObject();
+                do {
+                    JSONObject state = new JSONObject();
 
-                try {
-                    state.put("latitude", cursor.getFloat(1));
-                    state.put("longitude", cursor.getFloat(2));
-                    state.put("accuracy", cursor.getInt(3));
-                    state.put("speed", cursor.getFloat(4));
-                    state.put("heading", cursor.getFloat(5));
-                    state.put("activity_type", cursor.getString(6));
-                    state.put("activity_confidence", cursor.getInt(7));
-                    state.put("battery_level", cursor.getInt(8));
-                    state.put("battery_charging", cursor.getInt(9));
-                    state.put("recorded_at", cursor.getLong(10));
-                    state.put("created_at", cursor.getLong(11));
+                    try {
+                        state.put("latitude", cursor.getFloat(1));
+                        state.put("longitude", cursor.getFloat(2));
+                        state.put("accuracy", cursor.getInt(3));
+                        state.put("speed", cursor.getFloat(4));
+                        state.put("heading", cursor.getFloat(5));
+                        state.put("activity_type", cursor.getString(6));
+                        state.put("activity_confidence", cursor.getInt(7));
+                        state.put("battery_level", cursor.getInt(8));
+                        state.put("battery_charging", cursor.getInt(9));
+                        state.put("recorded_at", cursor.getLong(10));
+                        state.put("created_at", cursor.getLong(11));
 
-                    results.put(state);
-                } catch (JSONException err) {
-                    Log.d(TAG, "- fail to serialize record", err);
-                }
-            } while (cursor.moveToNext());
+                        results.put(state);
+                    } catch (JSONException err) {
+                        Log.d(TAG, "- fail to serialize record", err);
+                    }
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception ex) {
+            Log.d(TAG, "- error during serialization", ex);
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
         }
-
-        database.close();
 
         return results;
     }
@@ -185,6 +186,5 @@ public class StorageHelper extends SQLiteOpenHelper {
         SQLiteDatabase database = this.getWritableDatabase();
 
         database.delete("states", "created_at <= ?", new String[] { String.valueOf(ttl) });
-        database.close();
     }
 }
