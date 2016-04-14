@@ -111,6 +111,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private long  fastestInterval      = (long)  SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
     private long  aggressiveInterval   = (long) MILLISECONDS_PER_SECOND * 4;
 
+    private Location lastLocation;
     private DetectedActivity lastActivity;
     private StorageHelper storageHelper;
     private IntentFilter batteryStatusFilter;
@@ -277,7 +278,9 @@ public class BackgroundLocationUpdateService extends Service implements
      * @param location
      */
     @Override
-    public void onLocationChanged(Location lastLocation) {
+    public void onLocationChanged(Location location) {
+        lastLocation = location;
+
         if (isDebugging) {
             Log.d(TAG, "- locationUpdateReceiver: " + lastLocation);
         }
@@ -289,14 +292,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
         recordLocations(lastLocation);
 
-        Intent batteryStatus = registerReceiver(null, batteryStatusFilter);
-        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                             status == BatteryManager.BATTERY_STATUS_FULL;
-
-        storageHelper.append(lastLocation, lastActivity, (100 * level) / scale, isCharging);
+        syncState();
     }
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
@@ -323,6 +319,8 @@ public class BackgroundLocationUpdateService extends Service implements
                     Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
                 }
 
+                syncState();
+
                 stopLocationWatching();
 
                 storageHelper.startSync();
@@ -331,6 +329,8 @@ public class BackgroundLocationUpdateService extends Service implements
             if (isDebugging) {
                 Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
             }
+
+            syncState();
 
             startLocationWatching();
 
@@ -498,6 +498,18 @@ public class BackgroundLocationUpdateService extends Service implements
         }
 
         return accuracy;
+    }
+
+    private void syncState() {
+        if (lastLocation == null) return;
+
+        Intent batteryStatus = registerReceiver(null, batteryStatusFilter);
+        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+        storageHelper.append(lastLocation, lastActivity, (100 * level) / scale,
+            status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL);
     }
 
     private int recordLocations(Location location) {
