@@ -150,7 +150,7 @@ public class StorageHelper extends SQLiteOpenHelper {
                         http.getOutputStream().write(results.toString().getBytes("UTF-8"));
 
                         if (http.getResponseCode() == 200) {
-                            Log.d(TAG, "- " + resultsCount + " records were successfully sent");
+                            Log.d(TAG, "- " + resultsCount + " records were sent successfully");
 
                             JSONObject lastResult = (JSONObject) results.get(resultsCount - 1);
 

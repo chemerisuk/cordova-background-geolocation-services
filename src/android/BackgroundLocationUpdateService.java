@@ -321,6 +321,8 @@ public class BackgroundLocationUpdateService extends Service implements
                 }
 
                 stopLocationWatching();
+
+                storageHelper.startSync();
             }
         } else if (!isRecording) {
             if (isDebugging) {
@@ -328,6 +330,8 @@ public class BackgroundLocationUpdateService extends Service implements
             }
 
             startLocationWatching();
+
+            storageHelper.stopSync();
         }
       }
     };
@@ -394,8 +398,6 @@ public class BackgroundLocationUpdateService extends Service implements
             if(isDebugging) {
                 Log.d(TAG, "- Recorder attached - start recording location updates");
             }
-
-            storageHelper.startSync();
         } else {
             if (this.startRecordingOnConnect) {
                 googleClientAPI.connect();
@@ -414,8 +416,6 @@ public class BackgroundLocationUpdateService extends Service implements
             if (isDebugging) {
                 Log.w(TAG, "- Recorder detached - stop recording location updates");
             }
-
-            storageHelper.stopSync();
         }
     }
 
@@ -560,6 +560,7 @@ public class BackgroundLocationUpdateService extends Service implements
             detectedActivitiesReceiver = null;
         }
 
+        storageHelper.stopSync();
         serviceLooper.quit();
 
         wakeLock.release();
