@@ -47,6 +47,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
     private Boolean isEnabled = false;
     private Boolean inBackground = false;
+    private Location lastLocation = null;
 
     private String desiredAccuracy = "1000";
 
@@ -304,30 +305,15 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         isEnabled = false;
     }
 
-    // @Override
-    // public void onPause(boolean multitasking) {
-    //     if(debug()) {
-    //         Log.d(TAG, "- locationUpdateReceiver Paused (starting recording = " + String.valueOf(isEnabled) + ")");
-    //     }
-    //     if (isEnabled) {
-    //         Activity activity = this.cordova.getActivity();
-    //         activity.sendBroadcast(new Intent(Constants.START_RECORDING));
-    //     }
-    // }
-
-    // @Override
-    // public void onResume(boolean multitasking) {
-    //     if(debug()) {
-    //         Log.d(TAG, "- locationUpdateReceiver Resumed (stopping recording)" + String.valueOf(isEnabled));
-    //     }
-    //     if (isEnabled) {
-    //         Activity activity = this.cordova.getActivity();
-    //         activity.sendBroadcast(new Intent(Constants.STOP_RECORDING));
-    //     }
-    // }
-
     private JSONObject locationToJSON(Location location) {
+        float bearing = location.getBearing();
+
+        if (bearing == 0 && lastLocation != null) {
+            bearing = lastLocation.bearingTo(location);
+        }
+
         JSONObject data = new JSONObject();
+
         try {
             data.put("latitude", location.getLatitude());
             data.put("longitude", location.getLongitude());
@@ -335,10 +321,12 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             data.put("altitude", location.getAltitude());
             data.put("timestamp", location.getTime());
             data.put("speed", location.getSpeed());
-            data.put("heading", location.getBearing());
+            data.put("heading", bearing);
         } catch(JSONException e) {
             Log.d(TAG, "ERROR CREATING JSON" + e);
         }
+
+        lastLocation = location;
 
         return data;
     }
