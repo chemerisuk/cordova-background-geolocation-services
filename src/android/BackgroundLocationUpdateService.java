@@ -37,6 +37,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 import android.os.AsyncTask;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -110,6 +111,10 @@ public class BackgroundLocationUpdateService extends Service implements
     private long  fastestInterval      = (long)  SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
     private long  aggressiveInterval   = (long) MILLISECONDS_PER_SECOND * 4;
 
+    private DetectedActivity lastActivity;
+    private StorageHelper storageHelper;
+    private IntentFilter batteryStatusFilter;
+
     private Boolean isDebugging;
     private String notificationTitle = "Background checking";
     private String notificationText = "ENABLED";
@@ -162,6 +167,10 @@ public class BackgroundLocationUpdateService extends Service implements
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         wakeLock.acquire();
+
+        storageHelper = new StorageHelper(this);
+        lastActivity  = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
+        batteryStatusFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
     }
 
     @Override
@@ -268,13 +277,23 @@ public class BackgroundLocationUpdateService extends Service implements
         broadcastManager.sendBroadcast(localIntent);
 
         recordLocations(lastLocation);
+
+        Intent batteryStatus = registerReceiver(null, batteryStatusFilter);
+        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                             status == BatteryManager.BATTERY_STATUS_FULL;
+
+        storageHelper.append(lastLocation, lastActivity, level / (float)scale, isCharging);
     }
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
-        DetectedActivity lastActivity = result.getMostProbableActivity();
+
+        lastActivity = result.getMostProbableActivity();
 
         if (isDebugging) {
             Log.w(TAG, "MOST LIKELY ACTIVITY: " + Constants.getActivityString(lastActivity.getType()) + " " + lastActivity.getConfidence());
