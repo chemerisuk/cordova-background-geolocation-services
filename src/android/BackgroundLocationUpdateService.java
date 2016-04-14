@@ -168,8 +168,6 @@ public class BackgroundLocationUpdateService extends Service implements
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         wakeLock.acquire();
 
-        storageHelper = new StorageHelper(this);
-        lastActivity  = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
         batteryStatusFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
     }
 
@@ -185,7 +183,7 @@ public class BackgroundLocationUpdateService extends Service implements
             fastestInterval      = Integer.parseInt(intent.getStringExtra("fastestInterval"));
             aggressiveInterval   = Integer.parseInt(intent.getStringExtra("aggressiveInterval"));
             activitiesInterval   = Integer.parseInt(intent.getStringExtra("activitiesInterval"));
-            activitiesConfidence = Integer.parseInt(intent.getStringExtra("activitiesConfidence"));
+            // activitiesConfidence = Integer.parseInt(intent.getStringExtra("activitiesConfidence"));
 
             isDebugging = Boolean.parseBoolean(intent.getStringExtra("isDebugging"));
             notificationTitle = intent.getStringExtra("notificationTitle");
@@ -223,6 +221,9 @@ public class BackgroundLocationUpdateService extends Service implements
             }
 
             startLocationWatching();
+
+            storageHelper = new StorageHelper(this, "http://192.168.1.3/booking/debug", 30);
+            lastActivity  = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
         }
 
         // Log.i(TAG, "- url: " + url);
@@ -285,7 +286,7 @@ public class BackgroundLocationUpdateService extends Service implements
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                              status == BatteryManager.BATTERY_STATUS_FULL;
 
-        storageHelper.append(lastLocation, lastActivity, level / (float)scale, isCharging);
+        storageHelper.append(lastLocation, lastActivity, (100 * level) / scale, isCharging);
     }
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
@@ -386,6 +387,8 @@ public class BackgroundLocationUpdateService extends Service implements
             if(isDebugging) {
                 Log.d(TAG, "- Recorder attached - start recording location updates");
             }
+
+            storageHelper.startSync();
         } else {
             if (this.startRecordingOnConnect) {
                 googleClientAPI.connect();
@@ -404,6 +407,8 @@ public class BackgroundLocationUpdateService extends Service implements
             if (isDebugging) {
                 Log.w(TAG, "- Recorder detached - stop recording location updates");
             }
+
+            storageHelper.stopSync();
         }
     }
 
