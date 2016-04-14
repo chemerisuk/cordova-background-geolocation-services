@@ -14,13 +14,14 @@ module.exports = {
             notificationText    = config.notificationText  || "ENABLED",
             keepAlive           = config.keepAlive || false,
             activitiesInterval  = config.activitiesInterval || 0,
+            activitiesConfidence = config.activitiesConfidence || 0,
             keepAwake           = config.keepAwake || false;
 
         exec(success || function() {},
              failure || function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {

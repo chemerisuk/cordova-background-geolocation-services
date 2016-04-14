@@ -101,6 +101,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private Integer desiredAccuracy = 100;
     private Integer distanceFilter  = 30;
     private Integer activitiesInterval = 0;
+    private Integer activitiesConfidence = 75;
 
     private static final Integer SECONDS_PER_MINUTE      = 60;
     private static final Integer MILLISECONDS_PER_SECOND = 60;
@@ -175,6 +176,7 @@ public class BackgroundLocationUpdateService extends Service implements
             fastestInterval      = Integer.parseInt(intent.getStringExtra("fastestInterval"));
             aggressiveInterval   = Integer.parseInt(intent.getStringExtra("aggressiveInterval"));
             activitiesInterval   = Integer.parseInt(intent.getStringExtra("activitiesInterval"));
+            activitiesConfidence = Integer.parseInt(intent.getStringExtra("activitiesConfidence"));
 
             isDebugging = Boolean.parseBoolean(intent.getStringExtra("isDebugging"));
             notificationTitle = intent.getStringExtra("notificationTitle");
@@ -225,7 +227,8 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "- notificationTitle: "  + notificationTitle);
         Log.i(TAG, "- notificationText: "   + notificationText);
         Log.i(TAG, "- keepAlive: "   + keepAlive);
-        Log.i(TAG, "- activityDetectionInterval: "   + activitiesInterval);
+        Log.i(TAG, "- activitiesInterval: "   + activitiesInterval);
+        Log.i(TAG, "- activitiesConfidence: "   + activitiesConfidence);
 
         //We want this service to continue running until it is explicitly stopped
         return START_REDELIVER_INTENT;
@@ -284,7 +287,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
         if (!isDetectingActivities) return;
 
-        if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= 75) {
+        if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= activitiesConfidence) {
             if (isRecording) {
                 if (isDebugging) {
                     Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();

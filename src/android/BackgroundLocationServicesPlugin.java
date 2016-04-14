@@ -57,6 +57,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private String fastestInterval = "60000";
     private String aggressiveInterval = "4000";
     private String activitiesInterval = "0";
+    private String activitiesConfidence = "75";
 
     private String distanceFilter = "30";
     private String isDebugging = "false";
@@ -163,6 +164,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             updateServiceIntent.putExtra("fastestInterval", fastestInterval);
             updateServiceIntent.putExtra("aggressiveInterval", aggressiveInterval);
             updateServiceIntent.putExtra("activitiesInterval", activitiesInterval);
+            updateServiceIntent.putExtra("activitiesConfidence", activitiesConfidence);
             updateServiceIntent.putExtra("keepAwake", keepAwake);
             updateServiceIntent.putExtra("keepAlive", keepAlive);
 
@@ -175,8 +177,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             try {
-                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval]
-                //  0               1                2         3                4                   5      6                   7                8           9          10
+                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence]
+                //  0               1                2         3                4                   5      6                   7                8           9          10                  11
                 this.distanceFilter = data.getString(0);
                 this.desiredAccuracy = data.getString(1);
                 this.interval = data.getString(2);
@@ -188,6 +190,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 this.keepAlive = data.getString(8);
                 this.keepAwake = data.getString(9);
                 this.activitiesInterval = data.getString(10);
+                this.activitiesConfidence = data.getString(11);
 
                 callbackContext.success();
             } catch (JSONException e) {
