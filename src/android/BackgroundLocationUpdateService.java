@@ -121,6 +121,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private WakeLock wakeLock;
     private String syncUrl;
     private int syncInterval;
+    private String deviceToken;
 
     private Boolean isDetectingActivities = false;
     private Boolean isRecording = false;
@@ -193,6 +194,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
             syncUrl = intent.getStringExtra("syncUrl");
             syncInterval = Integer.parseInt(intent.getStringExtra("syncInterval"));
+            deviceToken = intent.getStringExtra("deviceToken");
 
             // Build the notification
             Notification.Builder builder = new Notification.Builder(this)
@@ -221,7 +223,7 @@ public class BackgroundLocationUpdateService extends Service implements
                 storageHelper.stopSync();
             }
 
-            storageHelper = new StorageHelper(this, syncUrl, syncInterval);
+            storageHelper = new StorageHelper(this, syncUrl, syncInterval, deviceToken);
 
             if (activitiesInterval > 0) {
                 startDetectingActivities();
@@ -246,6 +248,7 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "- activitiesConfidence: "   + activitiesConfidence);
         Log.i(TAG, "- syncUrl: "  + syncUrl);
         Log.i(TAG, "- syncInterval: "   + syncInterval);
+        Log.i(TAG, "- deviceToken: "   + deviceToken);
 
         //We want this service to continue running until it is explicitly stopped
         return START_REDELIVER_INTENT;

@@ -33,8 +33,9 @@ public class StorageHelper extends SQLiteOpenHelper {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private URL syncUrl = null;
     private int syncInterval = 600;
+    private String deviceToken = "";
 
-    public StorageHelper(Context applicationcontext, String syncUrl, int syncInterval) {
+    public StorageHelper(Context applicationcontext, String syncUrl, int syncInterval, String deviceToken) {
         super(applicationcontext, "androidsqlite.db", null, 1);
 
         try {
@@ -44,6 +45,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         }
 
         this.syncInterval = syncInterval;
+        this.deviceToken = deviceToken;
     }
 
     @Override
@@ -137,7 +139,7 @@ public class StorageHelper extends SQLiteOpenHelper {
                 int resultsCount = results.length();
 
                 if (resultsCount == 0) {
-                    scheduler.shutdown();
+                    stopSync();
                 } else {
                     Log.d(TAG, "- sending " + resultsCount + " records to server");
 
@@ -147,6 +149,7 @@ public class StorageHelper extends SQLiteOpenHelper {
                         http = (HttpURLConnection) syncUrl.openConnection();
                         http.setDoOutput(true);
                         http.setRequestMethod("POST");
+                        http.setRequestProperty("Authorization", deviceToken);
                         http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                         // send data to server
                         http.getOutputStream().write(results.toString().getBytes("UTF-8"));
@@ -173,6 +176,8 @@ public class StorageHelper extends SQLiteOpenHelper {
     }
 
     public void stopSync() {
+        Log.d(TAG, "- sync local db with server stopped");
+
         scheduler.shutdown();
     }
 
