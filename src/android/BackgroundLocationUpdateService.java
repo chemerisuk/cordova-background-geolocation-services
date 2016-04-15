@@ -575,7 +575,6 @@ public class BackgroundLocationUpdateService extends Service implements
             detectedActivitiesReceiver = null;
         }
 
-        storageHelper.stopSync();
         serviceLooper.quit();
 
         wakeLock.release();
