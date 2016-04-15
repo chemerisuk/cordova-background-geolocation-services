@@ -60,7 +60,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     }
 
     public boolean append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging) {
-        if (location == null || activity == null) return false;
+        if (location == null || activity == null || activity.getConfidence() == 0) return false;
 
         SQLiteDatabase database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
