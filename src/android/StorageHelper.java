@@ -59,7 +59,9 @@ public class StorageHelper extends SQLiteOpenHelper {
         onCreate(database);
     }
 
-    public void append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging) {
+    public boolean append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging) {
+        if (location == null || activity == null) return false;
+
         SQLiteDatabase database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
@@ -84,6 +86,8 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("created_at", System.currentTimeMillis());
 
         database.insert("states", null, values);
+
+        return true;
     }
 
     private JSONArray serialize() {
