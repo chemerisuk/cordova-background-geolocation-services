@@ -80,7 +80,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("battery_level", batteryLevel);
         values.put("battery_charging", isCharging);
         values.put("recorded_at", timestamp);
-        values.put("created_at", System.currentTimeMillis());
+        values.put("created_at", location.getTime());
 
         database.insert("states", null, values);
 
