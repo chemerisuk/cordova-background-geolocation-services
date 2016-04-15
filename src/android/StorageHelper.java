@@ -31,20 +31,17 @@ public class StorageHelper extends SQLiteOpenHelper {
     private static final String TAG = "BackgroundLocationUpdateService";
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private URL syncUrl = null;
-    private int syncInterval = 600;
     private String deviceToken = "";
 
     public StorageHelper(Context applicationcontext, String syncUrl, int syncInterval, String deviceToken) {
         super(applicationcontext, "androidsqlite.db", null, 1);
 
         try {
-            this.syncUrl = new URL(syncUrl);
+            start(new URL(syncUrl), syncInterval);
         } catch (MalformedURLException ex) {
             Log.d(TAG, "- invalid sync url specified", ex);
         }
 
-        this.syncInterval = syncInterval;
         this.deviceToken = deviceToken;
     }
 
@@ -133,9 +130,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         return results;
     }
 
-    public void startSync() {
-        if (this.syncUrl == null) return;
-
+    private void start(final URL syncUrl, final int syncInterval) {
         scheduler.scheduleWithFixedDelay(new Runnable() {
             public void run() {
                 Log.d(TAG, "- sync local db with server started");
@@ -143,9 +138,7 @@ public class StorageHelper extends SQLiteOpenHelper {
                 JSONArray results = serialize();
                 int resultsCount = results.length();
 
-                if (resultsCount == 0) {
-                    stopSync();
-                } else {
+                if (resultsCount > 0) {
                     Log.d(TAG, "- sending " + resultsCount + " records to server");
 
                     HttpURLConnection http = null;
@@ -177,10 +170,10 @@ public class StorageHelper extends SQLiteOpenHelper {
                     }
                 }
             }
-        }, 30, this.syncInterval, TimeUnit.SECONDS);
+        }, 30, syncInterval, TimeUnit.SECONDS);
     }
 
-    public void stopSync() {
+    public void shutdown() {
         Log.d(TAG, "- sync local db with server stopped");
 
         scheduler.shutdown();

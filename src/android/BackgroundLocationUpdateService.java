@@ -221,7 +221,7 @@ public class BackgroundLocationUpdateService extends Service implements
             startForeground(startId, notification);
 
             if (storageHelper != null) {
-                storageHelper.stopSync();
+                storageHelper.shutdown();
             }
 
             storageHelper = new StorageHelper(this, syncUrl, syncInterval, deviceToken);
@@ -322,8 +322,6 @@ public class BackgroundLocationUpdateService extends Service implements
                 syncState();
 
                 stopLocationWatching();
-
-                storageHelper.startSync();
             }
         } else if (!isRecording) {
             if (isDebugging) {
@@ -333,8 +331,6 @@ public class BackgroundLocationUpdateService extends Service implements
             syncState();
 
             startLocationWatching();
-
-            storageHelper.stopSync();
         }
       }
     };
