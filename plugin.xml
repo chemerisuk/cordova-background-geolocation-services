@@ -52,7 +52,7 @@
         <!-- sync -->
         <source-file src="src/android/sync/Authenticator.java" target-dir="src/com/flybuy/cordova/location/sync"/>
         <source-file src="src/android/sync/AuthenticatorService.java" target-dir="src/com/flybuy/cordova/location/sync"/>
-        <resource-file src="src/xml/authenticator.xml" target="res/xml/authenticator.xml" />
+        <resource-file src="src/android/xml/authenticator.xml" target="res/xml/authenticator.xml" />
 
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <service android:name="com.flybuy.cordova.location.sync.AuthenticatorService" android:enabled="true">
