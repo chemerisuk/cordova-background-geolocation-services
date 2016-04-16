@@ -125,7 +125,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private String deviceToken;
 
     private Boolean isDetectingActivities = false;
-    private Boolean isRecording = false;
+    private Boolean isWatchingLocation = false;
     private boolean startRecordingOnConnect = true;
 
     private LocationRequest locationRequest;
@@ -296,56 +296,44 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
 
-        lastActivity = result.getMostProbableActivity();
+            lastActivity = result.getMostProbableActivity();
 
-        if (isDebugging) {
-            Log.w(TAG, "MOST LIKELY ACTIVITY: " + Constants.getActivityString(lastActivity.getType()) + " " + lastActivity.getConfidence());
-        }
+            if (isDebugging) {
+                Log.w(TAG, "MOST LIKELY ACTIVITY: " + Constants.getActivityString(lastActivity.getType()) + " " + lastActivity.getConfidence());
+            }
 
-        Intent mIntent = new Intent(Constants.CALLBACK_ACTIVITY_UPDATE);
-        mIntent.putParcelableArrayListExtra(Constants.ACTIVITY_EXTRA,
-            (ArrayList<DetectedActivity>) result.getProbableActivities());
-        broadcastManager.sendBroadcast(mIntent);
+            Intent mIntent = new Intent(Constants.CALLBACK_ACTIVITY_UPDATE);
+            mIntent.putParcelableArrayListExtra(Constants.ACTIVITY_EXTRA,
+                (ArrayList<DetectedActivity>) result.getProbableActivities());
+            broadcastManager.sendBroadcast(mIntent);
 
-        if (!isDetectingActivities) return;
+            if (!isDetectingActivities) return;
 
-        if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= activitiesConfidence) {
-            if (isRecording) {
+            if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= activitiesConfidence) {
+                if (isWatchingLocation) {
+                    if (isDebugging) {
+                        Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
+                    }
+
+                    stopLocationWatching();
+
+                    syncState();
+                }
+            } else if (!isWatchingLocation) {
                 if (isDebugging) {
-                    Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
                 }
 
+                startLocationWatching();
+
                 syncState();
-
-                stopLocationWatching();
             }
-        } else if (!isRecording) {
-            if (isDebugging) {
-                Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
-            }
-
-            syncState();
-
-            startLocationWatching();
         }
-      }
     };
-
-    //Helper function to get the screen scale for our big icon
-    public float getImageFactor(Resources r) {
-         DisplayMetrics metrics = r.getDisplayMetrics();
-         float multiplier=metrics.density/3f;
-         return multiplier;
-    }
-
-    //retrieves the plugin resource ID from our resources folder for a given drawable name
-    public Integer getPluginResource(String resourceName) {
-        return getApplication().getResources().getIdentifier(resourceName, "drawable", getApplication().getPackageName());
-    }
 
     /**
      * Adds an onclick handler to the notification
@@ -389,7 +377,7 @@ public class BackgroundLocationUpdateService extends Service implements
                     .setInterval(interval)
                     .setSmallestDisplacement(distanceFilter);
 
-            this.isRecording = true;
+            this.isWatchingLocation = true;
 
             LocationServices.FusedLocationApi.requestLocationUpdates(
                 googleClientAPI, locationRequest, this, serviceLooper);
@@ -405,12 +393,12 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void stopLocationWatching() {
-        if (this.isRecording && googleClientAPI != null && googleClientAPI.isConnected()) {
+        if (this.isWatchingLocation && googleClientAPI != null && googleClientAPI.isConnected()) {
             //flush the location updates from the api
             LocationServices.FusedLocationApi.removeLocationUpdates(
                 googleClientAPI, this);
 
-            this.isRecording = false;
+            this.isWatchingLocation = false;
 
             if (isDebugging) {
                 Log.w(TAG, "- Recorder detached - stop recording location updates");
@@ -497,14 +485,14 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void syncState() {
-        if (lastLocation == null) return;
+        if (lastLocation == null || lastActivity == null || lastActivity.getConfidence() == 0) return;
 
         Intent batteryStatus = registerReceiver(null, batteryStatusFilter);
         int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
         int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 
-        storageHelper.append(lastLocation, lastActivity, (100 * level) / scale,
+        storageHelper.append(lastLocation, lastActivity, isWatchingLocation, (100 * level) / scale,
             status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL);
     }
 

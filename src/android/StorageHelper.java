@@ -34,7 +34,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     private String deviceToken = "";
 
     public StorageHelper(Context applicationcontext, String syncUrl, int syncInterval, String deviceToken) {
-        super(applicationcontext, "androidsqlite.db", null, 1);
+        super(applicationcontext, "androidsqlite.db", null, 2);
 
         try {
             start(new URL(syncUrl), syncInterval);
@@ -47,7 +47,7 @@ public class StorageHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading REAL, activity_type TEXT, activity_confidence INTEGER, battery_level INTEGER, battery_charging BOOLEAN, recorded_at DATETIME, created_at DATETIME)");
+        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading REAL, activity_type TEXT, activity_confidence INTEGER, activity_moving BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, recorded_at DATETIME, created_at DATETIME)");
     }
 
     @Override
@@ -56,9 +56,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         onCreate(database);
     }
 
-    public boolean append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging) {
-        if (location == null || activity == null || activity.getConfidence() == 0) return false;
-
+    public void append(Location location, DetectedActivity activity, boolean moving, int batteryLevel, boolean isCharging) {
         SQLiteDatabase database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
@@ -77,14 +75,13 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("heading", location.getBearing());
         values.put("activity_type", Constants.getActivityString(activity.getType()));
         values.put("activity_confidence", activity.getConfidence());
+        values.put("activity_moving", moving);
         values.put("battery_level", batteryLevel);
         values.put("battery_charging", isCharging);
         values.put("recorded_at", timestamp);
         values.put("created_at", location.getTime());
 
         database.insert("states", null, values);
-
-        return true;
     }
 
     private JSONArray serialize() {
@@ -108,10 +105,11 @@ public class StorageHelper extends SQLiteOpenHelper {
                         state.put("heading", cursor.getFloat(5));
                         state.put("activity_type", cursor.getString(6));
                         state.put("activity_confidence", cursor.getInt(7));
-                        state.put("battery_level", cursor.getInt(8));
-                        state.put("battery_charging", cursor.getInt(9));
-                        state.put("recorded_at", cursor.getLong(10));
-                        state.put("created_at", cursor.getLong(11));
+                        state.put("activity_moving", cursor.getInt(8));
+                        state.put("battery_level", cursor.getInt(9));
+                        state.put("battery_charging", cursor.getInt(10));
+                        state.put("recorded_at", cursor.getLong(11));
+                        state.put("created_at", cursor.getLong(12));
 
                         results.put(state);
                     } catch (JSONException err) {
