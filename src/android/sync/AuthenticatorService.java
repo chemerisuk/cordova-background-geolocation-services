@@ -1,4 +1,4 @@
-package com.flybuy.cordova.location;
+package com.flybuy.cordova.location.sync;
 
 import android.app.Service;
 import android.os.IBinder;
