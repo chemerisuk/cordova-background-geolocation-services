@@ -234,39 +234,40 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     private void startTrackRecording() {
-        if (!sharedPrefs.contains("??")) {
-            sharedPrefsEditor.putInt("??", 0);
+        if (!sharedPrefs.contains("##")) {
+            sharedPrefsEditor.putInt("##", 0);
             sharedPrefsEditor.commit();
         }
     }
 
     private void stopTrackRecording() {
-        int n = sharedPrefs.getInt("??", -1);
+        int n = sharedPrefs.getInt("##", -1);
 
         if (n > 0) {
             for (int i = 0; i < n; ++i) {
-                sharedPrefsEditor.remove("_" + i);
+                sharedPrefsEditor.remove("#" + i);
             }
         }
 
-        sharedPrefsEditor.remove("??");
+        sharedPrefsEditor.remove("##");
         sharedPrefsEditor.commit();
     }
 
     private void serializeTrack(CallbackContext callbackContext) {
         JSONArray track = new JSONArray();
 
-        if (sharedPrefs.contains("??")) {
-            int n = sharedPrefs.getInt("??", -1);
+        if (sharedPrefs.contains("##")) {
+            int n = sharedPrefs.getInt("##", -1);
 
             try {
                 for (int i = 0; i < n; ++i) {
-                    if (sharedPrefs.contains("?" + i)) {
+                    if (sharedPrefs.contains("#" + i)) {
                         JSONObject entry = new JSONObject();
 
-                        entry.put("x", sharedPrefs.getInt("?" + i++, 0));
-                        entry.put("y", sharedPrefs.getInt("?" + i++, 0));
-                        entry.put("t", sharedPrefs.getLong("?" + i, 0));
+                        entry.put("x", sharedPrefs.getInt("#" + i++, 0));
+                        entry.put("y", sharedPrefs.getInt("#" + i++, 0));
+                        entry.put("e", sharedPrefs.getInt("#" + i++, 0));
+                        entry.put("t", sharedPrefs.getLong("#" + i, 0));
 
                         track.put(entry);
                     }
@@ -305,7 +306,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private void unbindServiceFromWebview(Context context, Intent intent, boolean stopService) {
         if (!isEnabled) return;
 
-        if (stopService || keepAlive == "false" && sharedPrefs.getInt("??", -1) < 0) {
+        if (stopService || keepAlive == "false" && sharedPrefs.getInt("##", -1) < 0) {
             context.stopService(intent);
         }
 

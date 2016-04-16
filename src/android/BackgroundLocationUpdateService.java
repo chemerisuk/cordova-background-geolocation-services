@@ -290,7 +290,7 @@ public class BackgroundLocationUpdateService extends Service implements
         localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
         broadcastManager.sendBroadcast(localIntent);
 
-        recordLocations(lastLocation);
+        recordLocation(lastLocation);
 
         syncState();
     }
@@ -496,42 +496,34 @@ public class BackgroundLocationUpdateService extends Service implements
             status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL);
     }
 
-    private int recordLocations(Location location) {
-        int locationsCount = 0;
-        int n = sharedPrefs.getInt("??", -1);
+    private void recordLocation(Location location) {
+        int n = sharedPrefs.getInt("##", -1);
 
-        if (n < 0) return locationsCount;
+        if (n < 0) return;
 
-        // for (Location location : result.getLocations()) {
-            int ilat = (int)(location.getLatitude() * 100000);
-            int ilng = (int)(location.getLongitude() * 100000);
+        int ilat = (int)(location.getLatitude() * 100000);
+        int ilng = (int)(location.getLongitude() * 100000);
 
-            sharedPrefsEditor.putInt("?" + n++, ilat);
-            sharedPrefsEditor.putInt("?" + n++, ilng);
+        sharedPrefsEditor.putInt("#" + n++, ilat);
+        sharedPrefsEditor.putInt("#" + n++, ilng);
 
-            long timestamp;
+        long timestamp;
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                timestamp = location.getElapsedRealtimeNanos() / 1000000;
-            } else {
-                timestamp = location.getTime();
-            }
-
-            sharedPrefsEditor.putLong("?" + n++, timestamp);
-
-            ++locationsCount;
-        // }
-
-        if (locationsCount > 0) {
-            sharedPrefsEditor.putInt("??", n);
-            sharedPrefsEditor.commit();
-
-            if (isDebugging) {
-                Log.w(TAG, "Recorded " + locationsCount + " location(s) into SharedPreferences");
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            timestamp = location.getElapsedRealtimeNanos() / 1000000;
+        } else {
+            timestamp = location.getTime();
         }
 
-        return locationsCount;
+        sharedPrefsEditor.putLong("#" + n++, timestamp);
+        sharedPrefsEditor.putLong("#" + n++, location.getTime());
+
+        sharedPrefsEditor.putInt("##", n);
+        sharedPrefsEditor.commit();
+
+        if (isDebugging) {
+            Log.w(TAG, "Recorded location into SharedPreferences");
+        }
     }
 
     @Override
@@ -566,7 +558,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        int n = sharedPrefs.getInt("??", -1);
+        int n = sharedPrefs.getInt("##", -1);
 
         if (n == -1) {
             Log.w(TAG, "Application killed from task manager - Cleaning up");
