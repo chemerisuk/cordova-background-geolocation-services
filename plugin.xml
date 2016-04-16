@@ -49,6 +49,22 @@
             </feature>
         </config-file>
 
+        <!-- sync -->
+        <source-file src="src/android/sync/Authenticator.java" target-dir="src/com/flybuy/cordova/location/sync"/>
+        <source-file src="src/android/sync/AuthenticatorService.java" target-dir="src/com/flybuy/cordova/location/sync"/>
+        <source-file src="src/xml/authenticator.xml" target-dir="res/xml"/>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <service android:name="com.flybuy.cordova.location.sync.AuthenticatorService" android:enabled="true">
+                <intent-filter>
+                    <action android:name="android.accounts.AccountAuthenticator"/>
+                </intent-filter>
+                <meta-data
+                    android:name="android.accounts.AccountAuthenticator"
+                    android:resource="@xml/authenticator" />
+            </service>
+        </config-file>
+
     </platform>
 
 <!--     <platform name="ios">
