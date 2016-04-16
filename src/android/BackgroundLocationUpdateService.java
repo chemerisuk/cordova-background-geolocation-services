@@ -329,8 +329,6 @@ public class BackgroundLocationUpdateService extends Service implements
                 }
 
                 startLocationWatching();
-
-                syncState();
             }
         }
     };
