@@ -313,7 +313,15 @@ public class BackgroundLocationUpdateService extends Service implements
 
             if (!isDetectingActivities) return;
 
-            if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= activitiesConfidence) {
+            if (lastActivity.getType() != DetectedActivity.STILL) {
+                if (!isWatchingLocation) {
+                    if (isDebugging) {
+                        Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
+                    }
+
+                    startLocationWatching();
+                }
+            } else if (lastActivity.getConfidence() >= activitiesConfidence) {
                 if (isWatchingLocation) {
                     if (isDebugging) {
                         Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
@@ -323,12 +331,6 @@ public class BackgroundLocationUpdateService extends Service implements
 
                     syncState();
                 }
-            } else if (!isWatchingLocation) {
-                if (isDebugging) {
-                    Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
-                }
-
-                startLocationWatching();
             }
         }
     };
