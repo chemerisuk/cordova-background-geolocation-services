@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sync-adapter
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:contentAuthority="com.flybuy.cordova.location.sync"
+        android:contentAuthority="com.flybuy.cordova.location.provider"
         android:accountType="com.flybuy.cordova"
         android:userVisible="false"
         android:supportsUploading="true"

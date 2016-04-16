@@ -58,6 +58,7 @@
         <source-file src="src/android/sync/AuthenticatorService.java" target-dir="src/com/flybuy/cordova/location/sync"/>
         <source-file src="src/android/sync/SyncAdapter.java" target-dir="src/com/flybuy/cordova/location/sync"/>
         <source-file src="src/android/sync/SyncService.java" target-dir="src/com/flybuy/cordova/location/sync"/>
+        <source-file src="src/android/provider/StatesProvider.java" target-dir="src/com/flybuy/cordova/location/provider"/>
         <resource-file src="src/android/xml/authenticator.xml" target="res/xml/authenticator.xml" />
         <resource-file src="src/android/xml/syncadapter.xml" target="res/xml/syncadapter.xml" />
 
@@ -80,6 +81,12 @@
                 <meta-data android:name="android.content.SyncAdapter"
                     android:resource="@xml/syncadapter" />
             </service>
+
+            <provider
+                android:name="com.flybuy.cordova.location.provider.StatesProvider"
+                android:authorities="com.flybuy.cordova.location.provider"
+                android:exported="false"
+                android:syncable="true"/>
         </config-file>
 
     </platform>
