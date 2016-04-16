@@ -266,7 +266,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
                         entry.put("x", sharedPrefs.getInt("#" + i++, 0));
                         entry.put("y", sharedPrefs.getInt("#" + i++, 0));
-                        entry.put("e", sharedPrefs.getInt("#" + i++, 0));
+                        entry.put("e", sharedPrefs.getLong("#" + i++, 0));
                         entry.put("t", sharedPrefs.getLong("#" + i, 0));
 
                         track.put(entry);
