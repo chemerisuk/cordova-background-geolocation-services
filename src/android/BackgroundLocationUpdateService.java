@@ -555,6 +555,11 @@ public class BackgroundLocationUpdateService extends Service implements
         }
 
         if (storageHelper != null) {
+            // use OTHER activity to remember when service stops
+            lastActivity = new DetectedActivity(-1, 100);
+
+            recordState();
+
             storageHelper.stopSync();
         }
 

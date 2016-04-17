@@ -47,7 +47,7 @@ public class Constants {
             case DetectedActivity.WALKING:
                 return "WALKING";
             default:
-                return "Unknown";
+                return "OTHER";
         }
     }
 }
