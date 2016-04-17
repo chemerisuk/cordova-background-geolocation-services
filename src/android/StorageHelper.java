@@ -24,25 +24,22 @@ import java.net.URL;
 import java.net.HttpURLConnection;
 import java.io.OutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 
 
 public class StorageHelper extends SQLiteOpenHelper {
     private static final String TAG = "BackgroundLocationUpdateService";
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private static ScheduledExecutorService scheduler = null;
     private String deviceToken = "";
+    private URL syncUrl = null;
+    private int syncInterval = 0;
 
-    public StorageHelper(Context applicationcontext, String syncUrl, int syncInterval, String deviceToken) {
+    public StorageHelper(Context applicationcontext, URL syncUrl, int syncInterval, String deviceToken) {
         super(applicationcontext, "androidsqlite.db", null, 2);
 
-        try {
-            start(new URL(syncUrl), syncInterval);
-        } catch (MalformedURLException ex) {
-            Log.d(TAG, "- invalid sync url specified", ex);
-        }
-
+        this.syncUrl = syncUrl;
         this.deviceToken = deviceToken;
+        this.syncInterval = syncInterval;
     }
 
     @Override
@@ -92,8 +89,6 @@ public class StorageHelper extends SQLiteOpenHelper {
 
         try {
             if (cursor.moveToFirst()) {
-                Log.d(TAG, "- serializing " + cursor.getCount() + " records with server");
-
                 do {
                     JSONObject state = new JSONObject();
 
@@ -128,53 +123,64 @@ public class StorageHelper extends SQLiteOpenHelper {
         return results;
     }
 
-    private void start(final URL syncUrl, final int syncInterval) {
-        scheduler.scheduleWithFixedDelay(new Runnable() {
+    public void startSync() {
+        if (this.syncUrl == null || this.syncInterval == 0) return;
+
+        stopSync(); // make sure to stop previous scheduler
+
+        StorageHelper.scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        StorageHelper.scheduler.scheduleWithFixedDelay(new Runnable() {
             public void run() {
-                Log.d(TAG, "- sync local db with server started");
+                Log.d(TAG, "- Sync local db with server started");
 
                 JSONArray results = serialize();
                 int resultsCount = results.length();
 
                 if (resultsCount > 0) {
-                    Log.d(TAG, "- sending " + resultsCount + " records to server");
+                    Log.d(TAG, "- Send " + resultsCount + " records to server");
 
-                    HttpURLConnection http = null;
-
-                    try {
-                        http = (HttpURLConnection) syncUrl.openConnection();
-                        http.setDoOutput(true);
-                        http.setRequestMethod("POST");
-                        http.setRequestProperty("Authorization", deviceToken);
-                        http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                        // send data to server
-                        http.getOutputStream().write(results.toString().getBytes("UTF-8"));
-
-                        if (http.getResponseCode() == 200) {
-                            Log.d(TAG, "- " + resultsCount + " records were sent successfully");
-
-                            JSONObject lastResult = (JSONObject) results.get(resultsCount - 1);
-
-                            cleanup(lastResult.getLong("created_at"));
-                        }
-                    } catch (IOException ex) {
-                        Log.d(TAG, "- fail to send records", ex);
-                    } catch (JSONException ex) {
-                        Log.d(TAG, "- fail to cleanup records", ex);
-                    } finally {
-                        if (http != null) {
-                            http.disconnect();
-                        }
-                    }
+                    sendStatesToServer(results);
                 }
             }
-        }, 30, syncInterval, TimeUnit.SECONDS);
+        }, 30, this.syncInterval, TimeUnit.SECONDS);
     }
 
-    public void shutdown() {
-        Log.d(TAG, "- sync local db with server stopped");
+    public void stopSync() {
+        if (StorageHelper.scheduler != null) {
+            Log.d(TAG, "- Sync local db with server stopped");
 
-        scheduler.shutdown();
+            StorageHelper.scheduler.shutdownNow();
+            StorageHelper.scheduler = null;
+        }
+    }
+
+    private void sendStatesToServer(JSONArray results) {
+        HttpURLConnection http = null;
+
+        try {
+            http = (HttpURLConnection) this.syncUrl.openConnection();
+            http.setDoOutput(true);
+            http.setRequestMethod("POST");
+            http.setRequestProperty("Authorization", this.deviceToken);
+            http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            // send data to server
+            http.getOutputStream().write(results.toString().getBytes("UTF-8"));
+
+            if (http.getResponseCode() == 200) {
+                JSONObject lastResult = (JSONObject) results.get(results.length() - 1);
+
+                cleanup(lastResult.getLong("created_at"));
+            }
+        } catch (IOException ex) {
+            Log.d(TAG, "- fail to send records", ex);
+        } catch (JSONException ex) {
+            Log.d(TAG, "- fail to cleanup records", ex);
+        } finally {
+            if (http != null) {
+                http.disconnect();
+            }
+        }
     }
 
     private void cleanup(long ttl) {

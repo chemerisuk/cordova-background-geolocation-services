@@ -82,6 +82,8 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 //Detected Activities imports
 
@@ -220,11 +222,12 @@ public class BackgroundLocationUpdateService extends Service implements
 
             startForeground(startId, notification);
 
-            if (storageHelper != null) {
-                storageHelper.shutdown();
+            try {
+                storageHelper = new StorageHelper(this, new URL(syncUrl), syncInterval, deviceToken);
+                storageHelper.startSync();
+            } catch (MalformedURLException ex) {
+                Log.d(TAG, "- Invalid sync url specified", ex);
             }
-
-            storageHelper = new StorageHelper(this, syncUrl, syncInterval, deviceToken);
 
             if (activitiesInterval > 0) {
                 startDetectingActivities();
@@ -292,7 +295,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
         recordLocation(lastLocation);
 
-        syncState();
+        recordState();
     }
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
@@ -329,7 +332,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
                     stopLocationWatching();
 
-                    syncState();
+                    recordState();
                 }
             }
         }
@@ -484,8 +487,8 @@ public class BackgroundLocationUpdateService extends Service implements
         return accuracy;
     }
 
-    private void syncState() {
-        if (lastLocation == null || lastActivity == null || lastActivity.getConfidence() == 0) return;
+    private void recordState() {
+        if (storageHelper == null || lastLocation == null || lastActivity == null || lastActivity.getConfidence() == 0) return;
 
         Intent batteryStatus = registerReceiver(null, batteryStatusFilter);
         int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
@@ -549,6 +552,10 @@ public class BackgroundLocationUpdateService extends Service implements
             unregisterReceiver(detectedActivitiesReceiver);
 
             detectedActivitiesReceiver = null;
+        }
+
+        if (storageHelper != null) {
+            storageHelper.stopSync();
         }
 
         serviceLooper.quit();
