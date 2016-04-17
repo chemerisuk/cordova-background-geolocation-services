@@ -28,6 +28,7 @@ import java.io.IOException;
 
 public class StorageHelper extends SQLiteOpenHelper {
     private static final String TAG = "BackgroundLocationUpdateService";
+    private static final int BATCH_SIZE = 300;
 
     private static ScheduledExecutorService scheduler = null;
     private String deviceToken = "";
@@ -82,7 +83,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     }
 
     private JSONArray serialize() {
-        String selectQuery = "SELECT * FROM states ORDER BY created_at ASC LIMIT 100";
+        String selectQuery = "SELECT * FROM states ORDER BY created_at ASC LIMIT " + BATCH_SIZE;
         SQLiteDatabase database = this.getReadableDatabase();
         Cursor cursor = database.rawQuery(selectQuery, null);
         JSONArray results = new JSONArray();
