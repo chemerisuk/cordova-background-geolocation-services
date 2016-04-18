@@ -494,9 +494,12 @@ public class BackgroundLocationUpdateService extends Service implements
         int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
         int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        int batteryLevel = (100 * level) / scale;
+        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
+        boolean isRecording = sharedPrefs.getInt("##", -1) >= 0;
 
-        storageHelper.append(lastLocation, lastActivity, isWatchingLocation, (100 * level) / scale,
-            status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL);
+        storageHelper.append(lastLocation, lastActivity, batteryLevel,
+            isCharging, isWatchingLocation, isRecording);
     }
 
     private void recordLocation(Location location) {

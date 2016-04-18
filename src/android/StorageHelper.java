@@ -54,7 +54,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         onCreate(database);
     }
 
-    public void append(Location location, DetectedActivity activity, boolean moving, int batteryLevel, boolean isCharging) {
+    public void append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging, boolean isMoving, boolean isRecording) {
         SQLiteDatabase database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
@@ -73,11 +73,12 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("heading", location.getBearing());
         values.put("activity_type", Constants.getActivityString(activity.getType()));
         values.put("activity_confidence", activity.getConfidence());
-        values.put("activity_moving", moving);
+        values.put("activity_moving", isMoving);
         values.put("battery_level", batteryLevel);
         values.put("battery_charging", isCharging);
         values.put("recorded_at", timestamp);
         values.put("created_at", System.currentTimeMillis());
+        values.put("recording", isRecording);
 
         database.insert("states", null, values);
     }
