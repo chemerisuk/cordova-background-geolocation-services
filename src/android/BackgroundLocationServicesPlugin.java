@@ -223,7 +223,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    serializeTrack(callbackContext);
+                    callbackContext.success(storageHelper.serialize(true, -1));
                 }
             });
         } else {
@@ -246,24 +246,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             sharedPrefsEditor.commit();
 
             storageHelper.readyToSync();
-        }
-    }
-
-    private void serializeTrack(CallbackContext callbackContext) {
-        JSONArray states = storageHelper.serialize(true, -1);
-        JSONArray track = new JSONArray();
-        String[] copyFields = new String[] { "latitude", "longitude", "recorded_at", "created_at" };
-
-        try {
-            for (int i = 0, n = states.length(); i < n; ++i) {
-                JSONObject state = (JSONObject)states.get(i);
-                // TODO: add filtering logic here
-                track.put(new JSONObject(state, copyFields));
-            }
-
-            callbackContext.success(track);
-        } catch (JSONException ex) {
-            callbackContext.error(ex.getMessage());
         }
     }
 
@@ -304,12 +286,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     private JSONObject locationToJSON(Location location) {
-        float bearing = location.getBearing();
-
-        if (bearing == 0 && lastLocation != null) {
-            bearing = lastLocation.bearingTo(location);
-        }
-
         JSONObject data = new JSONObject();
 
         try {

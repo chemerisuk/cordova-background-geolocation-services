@@ -283,11 +283,15 @@ public class BackgroundLocationUpdateService extends Service implements
      */
     @Override
     public void onLocationChanged(Location location) {
-        lastLocation = location;
-
         if (isDebugging) {
-            Log.d(TAG, "- locationUpdateReceiver: " + lastLocation);
+            Log.d(TAG, "- locationUpdateReceiver: " + location);
         }
+
+        if (!location.hasBearing() && lastLocation != null) {
+            location.setBearing(lastLocation.bearingTo(location));
+        }
+
+        lastLocation = location;
 
         //This is all for setting the callback for android which currently does not work
         Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);

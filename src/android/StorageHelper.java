@@ -32,12 +32,12 @@ public class StorageHelper extends SQLiteOpenHelper {
     private static ScheduledExecutorService scheduler = null;
 
     public StorageHelper(Context applicationcontext) {
-        super(applicationcontext, "locationstates.db", null, 1);
+        super(applicationcontext, "locationstates.db", null, 2);
     }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading REAL, activity_type TEXT, activity_confidence INTEGER, activity_moving BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, recorded_at DATETIME, created_at DATETIME, recording BOOLEAN)");
+        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading INTEGER, activity_type TEXT, activity_confidence INTEGER, activity_moving BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, recording BOOLEAN)");
     }
 
     @Override
@@ -62,14 +62,14 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("longitude", location.getLongitude());
         values.put("accuracy", location.getAccuracy());
         values.put("speed", location.getSpeed());
-        values.put("heading", location.getBearing());
+        values.put("heading", Math.round(location.getBearing()));
         values.put("activity_type", Constants.getActivityString(activity.getType()));
         values.put("activity_confidence", activity.getConfidence());
         values.put("activity_moving", isMoving);
         values.put("battery_level", batteryLevel);
         values.put("battery_charging", isCharging);
-        values.put("recorded_at", timestamp);
-        values.put("created_at", System.currentTimeMillis());
+        values.put("elapsed", timestamp);
+        values.put("timestamp", System.currentTimeMillis());
         values.put("recording", isRecording);
 
         database.insert("states", null, values);
@@ -82,7 +82,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     }
 
     public JSONArray serialize(boolean recording, int limit) {
-        String selectQuery = "SELECT * FROM states WHERE recording = " + (recording ? 1 : 0) + " ORDER BY created_at ASC";
+        String selectQuery = "SELECT * FROM states WHERE recording = " + (recording ? 1 : 0) + " ORDER BY timestamp ASC";
 
         if (limit > 0) {
             selectQuery += " LIMIT " + limit;
@@ -108,8 +108,8 @@ public class StorageHelper extends SQLiteOpenHelper {
                         state.put("activity_moving", cursor.getInt(8));
                         state.put("battery_level", cursor.getInt(9));
                         state.put("battery_charging", cursor.getInt(10));
-                        state.put("recorded_at", cursor.getLong(11));
-                        state.put("created_at", cursor.getLong(12));
+                        state.put("elapsed", cursor.getLong(11));
+                        state.put("timestamp", cursor.getLong(12));
 
                         results.put(state);
                     } catch (JSONException ex) {
@@ -173,7 +173,7 @@ public class StorageHelper extends SQLiteOpenHelper {
             if (http.getResponseCode() == 200) {
                 JSONObject lastResult = (JSONObject) results.get(results.length() - 1);
 
-                cleanup(lastResult.getLong("created_at"));
+                cleanup(lastResult.getLong("timestamp"));
             }
         } catch (IOException ex) {
             Log.d(TAG, "- fail to send records", ex);
@@ -186,9 +186,9 @@ public class StorageHelper extends SQLiteOpenHelper {
         }
     }
 
-    private void cleanup(long ttl) {
+    private void cleanup(long timestamp) {
         SQLiteDatabase database = this.getWritableDatabase();
 
-        database.delete("states", "recording = 0 AND created_at <= ?", new String[] { String.valueOf(ttl) });
+        database.delete("states", "recording = 0 AND timestamp <= ?", new String[] { String.valueOf(timestamp) });
     }
 }
