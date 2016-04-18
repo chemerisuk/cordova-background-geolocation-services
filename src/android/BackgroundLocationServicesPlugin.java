@@ -295,7 +295,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             data.put("altitude", location.getAltitude());
             data.put("timestamp", location.getTime());
             data.put("speed", location.getSpeed());
-            data.put("heading", bearing);
+            data.put("heading", location.getBearing());
         } catch(JSONException e) {
             Log.d(TAG, "ERROR CREATING JSON" + e);
         }
