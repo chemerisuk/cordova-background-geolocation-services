@@ -83,8 +83,8 @@ public class StorageHelper extends SQLiteOpenHelper {
         database.insert("states", null, values);
     }
 
-    private JSONArray serialize() {
-        String selectQuery = "SELECT * FROM states WHERE recording = 0 ORDER BY created_at ASC LIMIT " + BATCH_SIZE;
+    public JSONArray serialize(boolean recorded) {
+        String selectQuery = "SELECT * FROM states WHERE recording = " (recording ? 1 : 0) + " ORDER BY created_at ASC LIMIT " + BATCH_SIZE;
         SQLiteDatabase database = this.getReadableDatabase();
         Cursor cursor = database.rawQuery(selectQuery, null);
         JSONArray results = new JSONArray();
@@ -109,8 +109,8 @@ public class StorageHelper extends SQLiteOpenHelper {
                         state.put("created_at", cursor.getLong(12));
 
                         results.put(state);
-                    } catch (JSONException err) {
-                        Log.d(TAG, "- fail to serialize record", err);
+                    } catch (JSONException ex) {
+                        Log.d(TAG, "- Fail to serialize record", ex);
                     }
                 } while (cursor.moveToNext());
             }
@@ -136,7 +136,7 @@ public class StorageHelper extends SQLiteOpenHelper {
             public void run() {
                 Log.d(TAG, "- Sync local db with server started");
 
-                JSONArray results = serialize();
+                JSONArray results = serialize(false);
                 int resultsCount = results.length();
 
                 if (resultsCount > 0) {
