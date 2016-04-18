@@ -495,7 +495,7 @@ public class BackgroundLocationUpdateService extends Service implements
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
         int batteryLevel = (100 * level) / scale;
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
-        boolean isRecording = sharedPrefs.getInt("##", -1) >= 0;
+        boolean isRecording = sharedPrefs.contains("##");
 
         storageHelper.append(lastLocation, lastActivity, batteryLevel,
             isCharging, isWatchingLocation, isRecording);
@@ -542,9 +542,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        int n = sharedPrefs.getInt("##", -1);
-
-        if (n == -1) {
+        if (!sharedPrefs.contains("##")) {
             Log.w(TAG, "Application killed from task manager - Cleaning up");
 
             stopSelf();

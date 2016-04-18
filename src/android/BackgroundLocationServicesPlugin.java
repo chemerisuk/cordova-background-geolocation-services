@@ -178,7 +178,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
             callbackContext.success();
         } else if (ACTION_STOP.equalsIgnoreCase(action)) {
-            unbindServiceFromWebview(activity, updateServiceIntent, true);
+            unbindServiceFromWebview(activity, updateServiceIntent);
 
             callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
@@ -235,18 +235,18 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
     private void startTrackRecording() {
         if (!sharedPrefs.contains("##")) {
-            sharedPrefsEditor.putInt("##", 0);
+            sharedPrefsEditor.putBoolean("##", true);
             sharedPrefsEditor.commit();
         }
     }
 
     private void stopTrackRecording() {
-        int n = sharedPrefs.getInt("##", -1);
+        if (sharedPrefs.contains("##")) {
+            sharedPrefsEditor.remove("##");
+            sharedPrefsEditor.commit();
 
-        sharedPrefsEditor.remove("##");
-        sharedPrefsEditor.commit();
-
-        storageHelper.readyToSync();
+            storageHelper.readyToSync();
+        }
     }
 
     private void serializeTrack(CallbackContext callbackContext) {
@@ -290,10 +290,10 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         isEnabled = true;
     }
 
-    private void unbindServiceFromWebview(Context context, Intent intent, boolean stopService) {
+    private void unbindServiceFromWebview(Context context, Intent intent) {
         if (!isEnabled) return;
 
-        if (stopService || keepAlive == "false" && sharedPrefs.getInt("##", -1) < 0) {
+        if (!sharedPrefs.contains("##")) {
             context.stopService(intent);
         }
 
@@ -338,7 +338,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         if (isEnabled) {
             Activity activity = this.cordova.getActivity();
 
-            unbindServiceFromWebview(activity, updateServiceIntent, false);
+            unbindServiceFromWebview(activity, updateServiceIntent);
         }
     }
 
@@ -350,7 +350,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             if (isEnabled) {
                 Activity activity = this.cordova.getActivity();
 
-                unbindServiceFromWebview(activity, updateServiceIntent, false);
+                unbindServiceFromWebview(activity, updateServiceIntent);
             }
         }
 
