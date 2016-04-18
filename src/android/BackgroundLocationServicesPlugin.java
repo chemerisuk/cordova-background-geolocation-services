@@ -219,13 +219,25 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if ("stopTrackRecording".equalsIgnoreCase(action)) {
           stopTrackRecording();
 
+          storageHelper.readyToSync();
+
           callbackContext.success();
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
             final CallbackContext cb = callbackContext;
 
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    serializeTrack(cb);
+                    JSONArray states = storageHelper.serialize(true, -1);
+                    JSONArray track = new JSONArray();
+                    String[] copyFields = new String[] { "latitude", "longitude", "recorded_at", "created_at" };
+
+                    for (int i = 0, n = states.length(); i < n; ++i) {
+                        JSONObject state = (JSONObject)states.get(i);
+                        // TODO: add filtering logic here
+                        track.put(new JSONObject(state, copyFields));
+                    }
+
+                    callbackContext.success(track);
                 }
             });
         } else {

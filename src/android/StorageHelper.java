@@ -75,6 +75,12 @@ public class StorageHelper extends SQLiteOpenHelper {
         database.insert("states", null, values);
     }
 
+    public void readyToSync() {
+        SQLiteDatabase database = this.getWritableDatabase();
+
+        database.execSQL("UPDATE states SET recording = 0");
+    }
+
     public JSONArray serialize(boolean recorded, int limit) {
         String selectQuery = "SELECT * FROM states WHERE recording = " (recording ? 1 : 0) + " ORDER BY created_at ASC";
 
@@ -183,6 +189,6 @@ public class StorageHelper extends SQLiteOpenHelper {
     private void cleanup(long ttl) {
         SQLiteDatabase database = this.getWritableDatabase();
 
-        database.delete("states", "created_at <= ?", new String[] { String.valueOf(ttl) });
+        database.delete("states", "recording = 0 AND created_at <= ?", new String[] { String.valueOf(ttl) });
     }
 }
