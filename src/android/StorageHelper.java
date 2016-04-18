@@ -81,8 +81,8 @@ public class StorageHelper extends SQLiteOpenHelper {
         database.execSQL("UPDATE states SET recording = 0");
     }
 
-    public JSONArray serialize(boolean recorded, int limit) {
-        String selectQuery = "SELECT * FROM states WHERE recording = " (recording ? 1 : 0) + " ORDER BY created_at ASC";
+    public JSONArray serialize(boolean recording, int limit) {
+        String selectQuery = "SELECT * FROM states WHERE recording = " + (recording ? 1 : 0) + " ORDER BY created_at ASC";
 
         if (limit > 0) {
             selectQuery += " LIMIT " + limit;
@@ -128,7 +128,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         return results;
     }
 
-    public synchronized void startSync(URL syncUrl, int syncInterval, String deviceToken) {
+    public synchronized void startSync(final URL syncUrl, final int syncInterval, final String deviceToken) {
         stopSync(); // make sure to stop previous scheduler
 
         StorageHelper.scheduler = Executors.newSingleThreadScheduledExecutor();

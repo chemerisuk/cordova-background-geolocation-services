@@ -147,7 +147,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
       storageHelper = new StorageHelper(activity.getApplicationContext());
     }
 
-    public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
+    public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) {
         Activity activity = this.cordova.getActivity();
 
         Boolean result = true;
@@ -223,21 +223,23 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
           callbackContext.success();
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
-            final CallbackContext cb = callbackContext;
-
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
                     JSONArray states = storageHelper.serialize(true, -1);
                     JSONArray track = new JSONArray();
                     String[] copyFields = new String[] { "latitude", "longitude", "recorded_at", "created_at" };
 
-                    for (int i = 0, n = states.length(); i < n; ++i) {
-                        JSONObject state = (JSONObject)states.get(i);
-                        // TODO: add filtering logic here
-                        track.put(new JSONObject(state, copyFields));
-                    }
+                    try {
+                        for (int i = 0, n = states.length(); i < n; ++i) {
+                            JSONObject state = (JSONObject)states.get(i);
+                            // TODO: add filtering logic here
+                            track.put(new JSONObject(state, copyFields));
+                        }
 
-                    callbackContext.success(track);
+                        callbackContext.success(track);
+                    } catch (JSONException ex) {
+                        callbackContext.error(ex.getMessage());
+                    }
                 }
             });
         } else {
