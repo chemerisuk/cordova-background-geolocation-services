@@ -213,21 +213,31 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if(ACTION_REGISTER_FOR_ACTIVITY_UPDATES.equalsIgnoreCase(action)) {
             detectedActivitiesCallback = callbackContext;
         } else if ("startTrackRecording".equalsIgnoreCase(action)) {
-          startTrackRecording();
+            cordova.getThreadPool().execute(new Runnable() {
+                public void run() {
+                    startTrackRecording();
 
-          callbackContext.success();
+                    callbackContext.success();
+                }
+            });
         } else if ("stopTrackRecording".equalsIgnoreCase(action)) {
-          stopTrackRecording();
+            cordova.getThreadPool().execute(new Runnable() {
+                public void run() {
+                    stopTrackRecording();
 
-          callbackContext.success();
+                    callbackContext.success();
+                }
+            });
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    callbackContext.success(storageHelper.serialize(true, -1));
+                    JSONArray states = storageHelper.serialize(true, -1);
+
+                    callbackContext.success(states);
                 }
             });
         } else {
-          result = false;
+            result = false;
         }
 
         return result;
