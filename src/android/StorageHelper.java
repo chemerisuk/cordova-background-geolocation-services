@@ -36,7 +36,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     private int syncInterval = 0;
 
     public StorageHelper(Context applicationcontext, URL syncUrl, int syncInterval, String deviceToken) {
-        super(applicationcontext, "androidsqlite.db", null, 2);
+        super(applicationcontext, "androidsqlite.db", null, 3);
 
         this.syncUrl = syncUrl;
         this.deviceToken = deviceToken;
@@ -45,7 +45,7 @@ public class StorageHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading REAL, activity_type TEXT, activity_confidence INTEGER, activity_moving BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, recorded_at DATETIME, created_at DATETIME)");
+        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading REAL, activity_type TEXT, activity_confidence INTEGER, activity_moving BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, recorded_at DATETIME, created_at DATETIME, recording BOOLEAN)");
     }
 
     @Override
@@ -84,7 +84,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     }
 
     private JSONArray serialize() {
-        String selectQuery = "SELECT * FROM states ORDER BY created_at ASC LIMIT " + BATCH_SIZE;
+        String selectQuery = "SELECT * FROM states WHERE recording = 0 ORDER BY created_at ASC LIMIT " + BATCH_SIZE;
         SQLiteDatabase database = this.getReadableDatabase();
         Cursor cursor = database.rawQuery(selectQuery, null);
         JSONArray results = new JSONArray();
