@@ -32,7 +32,7 @@ public class StorageHelper extends SQLiteOpenHelper {
     private static ScheduledExecutorService scheduler = null;
 
     public StorageHelper(Context applicationcontext) {
-        super(applicationcontext, "androidsqlite.db", null, 3);
+        super(applicationcontext, "locationstates.db", null, 1);
     }
 
     @Override

@@ -294,8 +294,6 @@ public class BackgroundLocationUpdateService extends Service implements
         localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
         broadcastManager.sendBroadcast(localIntent);
 
-        recordLocation(lastLocation);
-
         recordState();
     }
 
@@ -501,36 +499,6 @@ public class BackgroundLocationUpdateService extends Service implements
 
         storageHelper.append(lastLocation, lastActivity, batteryLevel,
             isCharging, isWatchingLocation, isRecording);
-    }
-
-    private void recordLocation(Location location) {
-        int n = sharedPrefs.getInt("##", -1);
-
-        if (n < 0) return;
-
-        int ilat = (int)(location.getLatitude() * 100000);
-        int ilng = (int)(location.getLongitude() * 100000);
-
-        sharedPrefsEditor.putInt("#" + n++, ilat);
-        sharedPrefsEditor.putInt("#" + n++, ilng);
-
-        long timestamp;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            timestamp = location.getElapsedRealtimeNanos() / 1000000;
-        } else {
-            timestamp = location.getTime();
-        }
-
-        sharedPrefsEditor.putLong("#" + n++, timestamp);
-        sharedPrefsEditor.putLong("#" + n++, location.getTime());
-
-        sharedPrefsEditor.putInt("##", n);
-        sharedPrefsEditor.commit();
-
-        if (isDebugging) {
-            Log.w(TAG, "Recorded location into SharedPreferences");
-        }
     }
 
     @Override

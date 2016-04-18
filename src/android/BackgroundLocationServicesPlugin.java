@@ -219,27 +219,11 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if ("stopTrackRecording".equalsIgnoreCase(action)) {
           stopTrackRecording();
 
-          storageHelper.readyToSync();
-
           callbackContext.success();
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    JSONArray states = storageHelper.serialize(true, -1);
-                    JSONArray track = new JSONArray();
-                    String[] copyFields = new String[] { "latitude", "longitude", "recorded_at", "created_at" };
-
-                    try {
-                        for (int i = 0, n = states.length(); i < n; ++i) {
-                            JSONObject state = (JSONObject)states.get(i);
-                            // TODO: add filtering logic here
-                            track.put(new JSONObject(state, copyFields));
-                        }
-
-                        callbackContext.success(track);
-                    } catch (JSONException ex) {
-                        callbackContext.error(ex.getMessage());
-                    }
+                    serializeTrack(callbackContext);
                 }
             });
         } else {
@@ -259,40 +243,27 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private void stopTrackRecording() {
         int n = sharedPrefs.getInt("##", -1);
 
-        if (n > 0) {
-            for (int i = 0; i < n; ++i) {
-                sharedPrefsEditor.remove("#" + i);
-            }
-        }
-
         sharedPrefsEditor.remove("##");
         sharedPrefsEditor.commit();
+
+        storageHelper.readyToSync();
     }
 
     private void serializeTrack(CallbackContext callbackContext) {
+        JSONArray states = storageHelper.serialize(true, -1);
         JSONArray track = new JSONArray();
+        String[] copyFields = new String[] { "latitude", "longitude", "recorded_at", "created_at" };
 
-        if (sharedPrefs.contains("##")) {
-            int n = sharedPrefs.getInt("##", -1);
-
-            try {
-                for (int i = 0; i < n; ++i) {
-                    if (sharedPrefs.contains("#" + i)) {
-                        JSONObject entry = new JSONObject();
-
-                        entry.put("x", sharedPrefs.getInt("#" + i++, 0));
-                        entry.put("y", sharedPrefs.getInt("#" + i++, 0));
-                        entry.put("e", sharedPrefs.getLong("#" + i++, 0));
-                        entry.put("t", sharedPrefs.getLong("#" + i, 0));
-
-                        track.put(entry);
-                    }
-                }
-
-                callbackContext.success(track);
-            } catch (JSONException ex) {
-                callbackContext.error(ex.getMessage());
+        try {
+            for (int i = 0, n = states.length(); i < n; ++i) {
+                JSONObject state = (JSONObject)states.get(i);
+                // TODO: add filtering logic here
+                track.put(new JSONObject(state, copyFields));
             }
+
+            callbackContext.success(track);
+        } catch (JSONException ex) {
+            callbackContext.error(ex.getMessage());
         }
     }
 
