@@ -222,9 +222,10 @@ public class BackgroundLocationUpdateService extends Service implements
 
             startForeground(startId, notification);
 
+            storageHelper = new StorageHelper(this);
+
             try {
-                storageHelper = new StorageHelper(this, new URL(syncUrl), syncInterval, deviceToken);
-                storageHelper.startSync();
+                storageHelper.startSync(new URL(syncUrl), syncInterval, deviceToken);
             } catch (MalformedURLException ex) {
                 Log.d(TAG, "- Invalid sync url specified", ex);
             }
@@ -488,7 +489,7 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void recordState() {
-        if (storageHelper == null || lastLocation == null || lastActivity == null || lastActivity.getConfidence() == 0) return;
+        if (lastLocation == null || lastActivity == null || lastActivity.getConfidence() == 0) return;
 
         Intent batteryStatus = registerReceiver(null, batteryStatusFilter);
         int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);

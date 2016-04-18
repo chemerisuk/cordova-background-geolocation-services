@@ -30,16 +30,9 @@ public class StorageHelper extends SQLiteOpenHelper {
     private static final String TAG = "BackgroundLocationUpdateService";
 
     private static ScheduledExecutorService scheduler = null;
-    private String deviceToken = "";
-    private URL syncUrl = null;
-    private int syncInterval = 0;
 
-    public StorageHelper(Context applicationcontext, URL syncUrl, int syncInterval, String deviceToken) {
+    public StorageHelper(Context applicationcontext) {
         super(applicationcontext, "androidsqlite.db", null, 3);
-
-        this.syncUrl = syncUrl;
-        this.deviceToken = deviceToken;
-        this.syncInterval = syncInterval;
     }
 
     @Override
@@ -129,9 +122,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         return results;
     }
 
-    public void startSync() {
-        if (this.syncUrl == null || this.syncInterval == 0) return;
-
+    public synchronized void startSync(URL syncUrl, int syncInterval, String deviceToken) {
         stopSync(); // make sure to stop previous scheduler
 
         StorageHelper.scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -146,13 +137,13 @@ public class StorageHelper extends SQLiteOpenHelper {
                 if (resultsCount > 0) {
                     Log.d(TAG, "- Send " + resultsCount + " records to server");
 
-                    sendStatesToServer(results);
+                    sendStatesToServer(results, syncUrl, deviceToken);
                 }
             }
-        }, 30, this.syncInterval, TimeUnit.SECONDS);
+        }, 30, syncInterval, TimeUnit.SECONDS);
     }
 
-    public void stopSync() {
+    public synchronized void stopSync() {
         if (StorageHelper.scheduler != null) {
             Log.d(TAG, "- Sync local db with server stopped");
 
@@ -161,14 +152,14 @@ public class StorageHelper extends SQLiteOpenHelper {
         }
     }
 
-    private void sendStatesToServer(JSONArray results) {
+    private void sendStatesToServer(JSONArray results, URL syncUrl, String deviceToken) {
         HttpURLConnection http = null;
 
         try {
-            http = (HttpURLConnection) this.syncUrl.openConnection();
+            http = (HttpURLConnection) syncUrl.openConnection();
             http.setDoOutput(true);
             http.setRequestMethod("POST");
-            http.setRequestProperty("Authorization", this.deviceToken);
+            http.setRequestProperty("Authorization", deviceToken);
             http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
             // send data to server
             http.getOutputStream().write(results.toString().getBytes("UTF-8"));

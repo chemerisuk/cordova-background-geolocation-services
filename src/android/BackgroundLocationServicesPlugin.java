@@ -75,6 +75,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private LocalBroadcastManager broadcastManager;
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
+    private StorageHelper storageHelper;
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
         @Override
@@ -143,6 +144,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
       sharedPrefsEditor = sharedPrefs.edit();
 
       broadcastManager = LocalBroadcastManager.getInstance(activity.getApplicationContext());
+      storageHelper = new StorageHelper(activity.getApplicationContext());
     }
 
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) {
