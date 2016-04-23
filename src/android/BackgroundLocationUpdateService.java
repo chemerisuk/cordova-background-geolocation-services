@@ -64,6 +64,7 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 
 import static java.lang.Math.*;
 
+import android.app.AlarmManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.DisplayMetrics;
@@ -139,6 +140,9 @@ public class BackgroundLocationUpdateService extends Service implements
     private SharedPreferences.Editor sharedPrefsEditor;
     private LocalBroadcastManager broadcastManager;
 
+    private AlarmManager alarmMgr;
+    private PendingIntent alarmPI;
+
     @Override
     public IBinder onBind(Intent intent) {
         // TODO Auto-generated method stub
@@ -176,6 +180,15 @@ public class BackgroundLocationUpdateService extends Service implements
 
         batteryStatusFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         lastActivity  = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
+
+        alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent alarmIntent = new Intent(Constants.SYNC_ALARM_UPDATE);
+        if (Build.VERSION.SDK_INT >= 16) {
+            // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
+            alarmIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        }
+        alarmPI = PendingIntent.getBroadcast(this, 9003, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE));
     }
 
     @Override
@@ -239,6 +252,9 @@ public class BackgroundLocationUpdateService extends Service implements
             }
 
             startLocationWatching();
+            // schedule syncing
+            alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                30 * 1000, syncInterval * 1000, alarmPI);
         }
 
         // Log.i(TAG, "- url: " + url);
@@ -289,7 +305,7 @@ public class BackgroundLocationUpdateService extends Service implements
             Log.d(TAG, "- locationUpdateReceiver: " + location);
         }
 
-        if (!location || location.getAccuracy() < accuracyFilter) {
+        if (location == null || location.getAccuracy() < accuracyFilter) {
             return;
         }
 
@@ -343,6 +359,15 @@ public class BackgroundLocationUpdateService extends Service implements
 
                     recordState();
                 }
+            }
+        }
+    };
+
+    private BroadcastReceiver syncAlarmReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (isDebugging) {
+                Log.d(TAG, "- Sync local db with server started by alarm");
             }
         }
     };
@@ -534,6 +559,12 @@ public class BackgroundLocationUpdateService extends Service implements
             unregisterReceiver(detectedActivitiesReceiver);
 
             detectedActivitiesReceiver = null;
+        }
+
+        if (syncAlarmReceiver != null) {
+            unregisterReceiver(syncAlarmReceiver);
+
+            syncAlarmReceiver = null;
         }
 
         if (storageHelper != null) {
