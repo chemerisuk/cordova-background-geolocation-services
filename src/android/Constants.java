@@ -25,6 +25,7 @@ public class Constants {
   public static String LOCATION_UPDATE = P_NAME + "LOCATION_UPDATE";
   public static String DETECTED_ACTIVITY_UPDATE = P_NAME + "DETECTED_ACTIVITY_UPDATE";
   public static String SYNC_ALARM_UPDATE = P_NAME + "SYNC_ALARM_UPDATE";
+  public static String STILL_ACTIVITY_UPDATE = P_NAME + "STILL_ACTIVITY_UPDATE";
 
   private static final String ConstantsTAG = "Constants";
 

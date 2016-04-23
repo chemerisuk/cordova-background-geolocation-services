@@ -14,6 +14,7 @@ module.exports = {
             notificationText    = config.notificationText  || "ENABLED",
             keepAlive           = config.keepAlive || false,
             activitiesInterval  = config.activitiesInterval || 0,
+            stillActivitiesInterval = config.stillActivitiesInterval || 0,
             activitiesConfidence = config.activitiesConfidence || 75,
             keepAwake           = config.keepAwake || false,
             syncUrl             = config.syncUrl || "",
@@ -25,7 +26,7 @@ module.exports = {
              failure || function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, accuracyFilter]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, accuracyFilter, stillActivitiesInterval]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {
