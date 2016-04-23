@@ -105,6 +105,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private Integer distanceFilter  = 30;
     private Integer activitiesInterval = 0;
     private Integer activitiesConfidence = 75;
+    private Integer accuracyFilter = 1000;
 
     private static final Integer SECONDS_PER_MINUTE      = 60;
     private static final Integer MILLISECONDS_PER_SECOND = 60;
@@ -190,6 +191,7 @@ public class BackgroundLocationUpdateService extends Service implements
             aggressiveInterval   = Integer.parseInt(intent.getStringExtra("aggressiveInterval"));
             activitiesInterval   = Integer.parseInt(intent.getStringExtra("activitiesInterval"));
             activitiesConfidence = Integer.parseInt(intent.getStringExtra("activitiesConfidence"));
+            accuracyFilter       = Integer.parseInt(intent.getStringExtra("accuracyFilter"));
 
             isDebugging = Boolean.parseBoolean(intent.getStringExtra("isDebugging"));
             notificationTitle = intent.getStringExtra("notificationTitle");
@@ -285,6 +287,10 @@ public class BackgroundLocationUpdateService extends Service implements
     public void onLocationChanged(Location location) {
         if (isDebugging) {
             Log.d(TAG, "- locationUpdateReceiver: " + location);
+        }
+
+        if (!location || location.getAccuracy() < accuracyFilter) {
+            return;
         }
 
         if (!location.hasBearing() && lastLocation != null) {
