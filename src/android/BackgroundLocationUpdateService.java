@@ -203,7 +203,7 @@ public class BackgroundLocationUpdateService extends Service implements
             // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
             alarmIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
-        alarmPI = PendingIntent.getBroadcast(this, 9004, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        alarmPI = PendingIntent.getBroadcast(this, 9004, alarmIntent, 0);
         registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE), null, serviceHandler);
 
         storageHelper = new StorageHelper(this);
@@ -282,11 +282,13 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "- fastestInterval: "      + fastestInterval);
 
         Log.i(TAG, "- distanceFilter: "     + distanceFilter);
+        Log.i(TAG, "- accuracyFilter: "     + accuracyFilter);
         Log.i(TAG, "- desiredAccuracy: "    + desiredAccuracy);
         Log.i(TAG, "- isDebugging: "        + isDebugging);
         Log.i(TAG, "- notificationTitle: "  + notificationTitle);
         Log.i(TAG, "- notificationText: "   + notificationText);
         Log.i(TAG, "- activitiesInterval: "   + activitiesInterval);
+        Log.i(TAG, "- stillActivitiesInterval: "   + stillActivitiesInterval);
         Log.i(TAG, "- activitiesConfidence: "   + activitiesConfidence);
         Log.i(TAG, "- syncUrl: "  + syncUrl);
         Log.i(TAG, "- syncInterval: "   + syncInterval);
@@ -395,7 +397,7 @@ public class BackgroundLocationUpdateService extends Service implements
         @Override
         public void onReceive(Context context, Intent intent) {
             if (isDebugging) {
-                Log.d(TAG, "- Still activity update");
+                Log.d(TAG, "- Still activity check by alarm");
             }
 
             stopDetectingActivities();
