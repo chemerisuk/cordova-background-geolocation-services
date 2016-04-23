@@ -258,6 +258,7 @@ public class BackgroundLocationUpdateService extends Service implements
             }
 
             notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR;
+            notification.contentView.setImageViewResource(android.R.id.icon, getApplicationInfo().icon);
 
             startForeground(startId, notification);
 
@@ -310,7 +311,12 @@ public class BackgroundLocationUpdateService extends Service implements
         String pkgName  = context.getPackageName();
 
         int resId;
-        resId = res.getIdentifier("icon", "drawable", pkgName);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            resId = res.getIdentifier("ic_stat_notify", "drawable", pkgName);
+        } else {
+            resId = res.getIdentifier("icon", "drawable", pkgName);
+        }
 
         return resId;
     }
