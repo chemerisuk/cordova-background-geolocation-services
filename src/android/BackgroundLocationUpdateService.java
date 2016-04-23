@@ -83,10 +83,16 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.HttpURLConnection;
+import java.io.IOException;
 
-//Detected Activities imports
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONException;
+
 
 public class BackgroundLocationUpdateService extends Service implements
         LocationListener,
@@ -124,7 +130,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private String notificationTitle = "Background checking";
     private String notificationText = "ENABLED";
     private WakeLock wakeLock;
-    private String syncUrl;
+    private URL syncUrl;
     private int syncInterval;
     private String deviceToken;
 
@@ -187,8 +193,10 @@ public class BackgroundLocationUpdateService extends Service implements
             // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
             alarmIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
-        alarmPI = PendingIntent.getBroadcast(this, 9003, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE));
+        alarmPI = PendingIntent.getBroadcast(this, 9003, alarmIntent, 0);
+        registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE), null, serviceHandler);
+
+        storageHelper = new StorageHelper(this);
     }
 
     @Override
@@ -210,9 +218,14 @@ public class BackgroundLocationUpdateService extends Service implements
             notificationTitle = intent.getStringExtra("notificationTitle");
             notificationText = intent.getStringExtra("notificationText");
 
-            syncUrl = intent.getStringExtra("syncUrl");
             syncInterval = Integer.parseInt(intent.getStringExtra("syncInterval"));
             deviceToken = intent.getStringExtra("deviceToken");
+
+            try {
+                syncUrl = new URL(intent.getStringExtra("syncUrl"));
+            } catch (MalformedURLException ex) {
+                Log.d(TAG, "- Invalid sync url specified", ex);
+            }
 
             // Build the notification
             Notification.Builder builder = new Notification.Builder(this)
@@ -237,14 +250,6 @@ public class BackgroundLocationUpdateService extends Service implements
 
             startForeground(startId, notification);
 
-            storageHelper = new StorageHelper(this);
-
-            try {
-                storageHelper.startSync(new URL(syncUrl), syncInterval, deviceToken);
-            } catch (MalformedURLException ex) {
-                Log.d(TAG, "- Invalid sync url specified", ex);
-            }
-
             if (activitiesInterval > 0) {
                 startDetectingActivities();
             } else {
@@ -252,9 +257,12 @@ public class BackgroundLocationUpdateService extends Service implements
             }
 
             startLocationWatching();
-            // schedule syncing
-            alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                30 * 1000, syncInterval * 1000, alarmPI);
+
+            if (syncUrl != null && syncInterval > 0) {
+                // schedule syncing data with server
+                alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    30 * 1000, syncInterval * 1000, alarmPI);
+            }
         }
 
         // Log.i(TAG, "- url: " + url);
@@ -367,7 +375,40 @@ public class BackgroundLocationUpdateService extends Service implements
         @Override
         public void onReceive(Context context, Intent intent) {
             if (isDebugging) {
-                Log.d(TAG, "- Sync local db with server started by alarm");
+                Log.d(TAG, "- Sync local db started by alarm");
+            }
+
+            JSONArray results = storageHelper.serialize(false, 300);
+            int resultsCount = results.length();
+
+            if (resultsCount > 0) {
+                Log.d(TAG, "- Send " + resultsCount + " records to server");
+
+                HttpURLConnection http = null;
+
+                try {
+                    http = (HttpURLConnection) syncUrl.openConnection();
+                    http.setDoOutput(true);
+                    http.setRequestMethod("POST");
+                    http.setRequestProperty("Authorization", deviceToken);
+                    http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    // send data to server
+                    http.getOutputStream().write(results.toString().getBytes("UTF-8"));
+
+                    if (http.getResponseCode() == 200) {
+                        JSONObject lastResult = (JSONObject) results.get(results.length() - 1);
+
+                        storageHelper.cleanup(lastResult.getLong("timestamp"));
+                    }
+                } catch (IOException ex) {
+                    Log.d(TAG, "- fail to send records", ex);
+                } catch (JSONException ex) {
+                    Log.d(TAG, "- fail to cleanup records", ex);
+                } finally {
+                    if (http != null) {
+                        http.disconnect();
+                    }
+                }
             }
         }
     };
@@ -572,8 +613,6 @@ public class BackgroundLocationUpdateService extends Service implements
             lastActivity = new DetectedActivity(-1, 100);
 
             recordState();
-
-            storageHelper.stopSync();
         }
 
         serviceLooper.quit();

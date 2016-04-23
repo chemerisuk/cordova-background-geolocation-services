@@ -12,24 +12,13 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.google.android.gms.location.DetectedActivity;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 
-import java.net.URL;
-import java.net.HttpURLConnection;
-import java.io.OutputStream;
-import java.io.IOException;
-
 
 public class StorageHelper extends SQLiteOpenHelper {
     private static final String TAG = "BackgroundLocationUpdateService";
-
-    private static ScheduledExecutorService scheduler = null;
 
     public StorageHelper(Context applicationcontext) {
         super(applicationcontext, "locationstates.db", null, 2);
@@ -128,65 +117,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         return results;
     }
 
-    public synchronized void startSync(final URL syncUrl, final int syncInterval, final String deviceToken) {
-        stopSync(); // make sure to stop previous scheduler
-
-        StorageHelper.scheduler = Executors.newSingleThreadScheduledExecutor();
-
-        StorageHelper.scheduler.scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-                Log.d(TAG, "- Sync local db with server started");
-
-                JSONArray results = serialize(false, 300);
-                int resultsCount = results.length();
-
-                if (resultsCount > 0) {
-                    Log.d(TAG, "- Send " + resultsCount + " records to server");
-
-                    sendStatesToServer(results, syncUrl, deviceToken);
-                }
-            }
-        }, 30, syncInterval, TimeUnit.SECONDS);
-    }
-
-    public synchronized void stopSync() {
-        if (StorageHelper.scheduler != null) {
-            Log.d(TAG, "- Sync local db with server stopped");
-
-            StorageHelper.scheduler.shutdownNow();
-            StorageHelper.scheduler = null;
-        }
-    }
-
-    private void sendStatesToServer(JSONArray results, URL syncUrl, String deviceToken) {
-        HttpURLConnection http = null;
-
-        try {
-            http = (HttpURLConnection) syncUrl.openConnection();
-            http.setDoOutput(true);
-            http.setRequestMethod("POST");
-            http.setRequestProperty("Authorization", deviceToken);
-            http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            // send data to server
-            http.getOutputStream().write(results.toString().getBytes("UTF-8"));
-
-            if (http.getResponseCode() == 200) {
-                JSONObject lastResult = (JSONObject) results.get(results.length() - 1);
-
-                cleanup(lastResult.getLong("timestamp"));
-            }
-        } catch (IOException ex) {
-            Log.d(TAG, "- fail to send records", ex);
-        } catch (JSONException ex) {
-            Log.d(TAG, "- fail to cleanup records", ex);
-        } finally {
-            if (http != null) {
-                http.disconnect();
-            }
-        }
-    }
-
-    private void cleanup(long timestamp) {
+    public void cleanup(long timestamp) {
         SQLiteDatabase database = this.getWritableDatabase();
 
         database.delete("states", "recording = 0 AND timestamp <= ?", new String[] { String.valueOf(timestamp) });
