@@ -17,6 +17,7 @@ import android.telephony.TelephonyManager;
 import static android.telephony.PhoneStateListener.*;
 import android.telephony.CellLocation;
 
+import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.Notification;
@@ -152,6 +153,9 @@ public class BackgroundLocationUpdateService extends Service implements
     private AlarmManager alarmMgr;
     private PendingIntent alarmPI;
 
+    private ActivityManager activityManager;
+    private ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+
     @Override
     public IBinder onBind(Intent intent) {
         // TODO Auto-generated method stub
@@ -210,6 +214,7 @@ public class BackgroundLocationUpdateService extends Service implements
         storageHelper = new StorageHelper(this);
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
     }
 
     @Override
@@ -620,8 +625,10 @@ public class BackgroundLocationUpdateService extends Service implements
         boolean isRecording = sharedPrefs.contains("##");
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
+        activityManager.getMemoryInfo(mi);
+
         storageHelper.append(lastLocation, lastActivity, batteryLevel,
-            isCharging, isRecording, isGPSEnabled);
+            isCharging, isRecording, isGPSEnabled, mi.lowMemory);
     }
 
     @Override
