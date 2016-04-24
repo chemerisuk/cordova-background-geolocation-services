@@ -140,6 +140,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private Boolean isWatchingLocation = false;
     private boolean startRecordingOnConnect = true;
 
+    private LocationManager locationManager;
     private LocationRequest locationRequest;
     private volatile Looper serviceLooper;
     private volatile Handler serviceHandler;
@@ -207,6 +208,8 @@ public class BackgroundLocationUpdateService extends Service implements
         registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE), null, serviceHandler);
 
         storageHelper = new StorageHelper(this);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     }
 
     @Override
@@ -615,9 +618,10 @@ public class BackgroundLocationUpdateService extends Service implements
         int batteryLevel = (100 * level) / scale;
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
         boolean isRecording = sharedPrefs.contains("##");
+        boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
         storageHelper.append(lastLocation, lastActivity, batteryLevel,
-            isCharging, isWatchingLocation, isRecording);
+            isCharging, isRecording, isGPSEnabled);
     }
 
     @Override

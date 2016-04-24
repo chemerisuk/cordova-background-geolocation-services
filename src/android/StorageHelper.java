@@ -21,12 +21,12 @@ public class StorageHelper extends SQLiteOpenHelper {
     private static final String TAG = "BackgroundLocationUpdateService";
 
     public StorageHelper(Context applicationcontext) {
-        super(applicationcontext, "locationstates.db", null, 2);
+        super(applicationcontext, "locationstates.db", null, 3);
     }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading INTEGER, activity_type TEXT, activity_confidence INTEGER, activity_moving BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, recording BOOLEAN)");
+        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading INTEGER, activity_type TEXT, activity_confidence INTEGER, gps_enabled BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, recording BOOLEAN)");
     }
 
     @Override
@@ -35,7 +35,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         onCreate(database);
     }
 
-    public void append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging, boolean isMoving, boolean isRecording) {
+    public void append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging, boolean isRecording, boolean isGPSEnabled) {
         SQLiteDatabase database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
@@ -54,7 +54,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("heading", Math.round(location.getBearing()));
         values.put("activity_type", Constants.getActivityString(activity.getType()));
         values.put("activity_confidence", activity.getConfidence());
-        values.put("activity_moving", isMoving);
+        values.put("gps_enabled", isGPSEnabled);
         values.put("battery_level", batteryLevel);
         values.put("battery_charging", isCharging);
         values.put("elapsed", timestamp);
@@ -94,7 +94,7 @@ public class StorageHelper extends SQLiteOpenHelper {
                         state.put("heading", cursor.getFloat(5));
                         state.put("activity_type", cursor.getString(6));
                         state.put("activity_confidence", cursor.getInt(7));
-                        state.put("activity_moving", cursor.getInt(8));
+                        state.put("gps_enabled", cursor.getInt(8));
                         state.put("battery_level", cursor.getInt(9));
                         state.put("battery_charging", cursor.getInt(10));
                         state.put("elapsed", cursor.getLong(11));
