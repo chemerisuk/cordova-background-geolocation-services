@@ -21,12 +21,12 @@ public class StorageHelper extends SQLiteOpenHelper {
     private static final String TAG = "BackgroundLocationUpdateService";
 
     public StorageHelper(Context applicationcontext) {
-        super(applicationcontext, "locationstates.db", null, 4);
+        super(applicationcontext, "locationstates.db", null, 6);
     }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
-        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading INTEGER, activity_type TEXT, activity_confidence INTEGER, gps_enabled BOOLEAN, low_memory BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, recording BOOLEAN)");
+        database.execSQL("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading INTEGER, activity_type TEXT, activity_confidence INTEGER, gps_enabled BOOLEAN, wifi_enabled BOOLEAN, low_memory BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, recording BOOLEAN)");
     }
 
     @Override
@@ -35,8 +35,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         onCreate(database);
     }
 
-    public void append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging, boolean isRecording, boolean isGPSEnabled, boolean isLowMemory) {
-        SQLiteDatabase database = this.getWritableDatabase();
+    public void append(Location location, DetectedActivity activity, int batteryLevel, boolean isCharging, boolean isGPSEnabled, boolean isWifiEnabled, boolean isLowMemory, boolean isRecording) {
         ContentValues values = new ContentValues();
 
         long timestamp;
@@ -55,6 +54,7 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("activity_type", Constants.getActivityString(activity.getType()));
         values.put("activity_confidence", activity.getConfidence());
         values.put("gps_enabled", isGPSEnabled);
+        values.put("wifi_enabled", isWifiEnabled);
         values.put("low_memory", isLowMemory);
         values.put("battery_level", batteryLevel);
         values.put("battery_charging", isCharging);
@@ -62,7 +62,12 @@ public class StorageHelper extends SQLiteOpenHelper {
         values.put("timestamp", System.currentTimeMillis());
         values.put("recording", isRecording);
 
-        database.insert("states", null, values);
+        SQLiteDatabase database = this.getWritableDatabase();
+        long rowId = database.insert("states", null, values);
+
+        if (rowId <= 0) {
+            Log.e(TAG, "Failed to insert row into states");
+        }
     }
 
     public void readyToSync() {
@@ -72,14 +77,14 @@ public class StorageHelper extends SQLiteOpenHelper {
     }
 
     public JSONArray serialize(boolean recording, int limit) {
-        String selectQuery = "SELECT * FROM states WHERE recording = " + (recording ? 1 : 0) + " ORDER BY timestamp ASC";
+        String selectQuery = "SELECT * FROM states WHERE recording = ? ORDER BY timestamp ASC";
 
         if (limit > 0) {
             selectQuery += " LIMIT " + limit;
         }
 
         SQLiteDatabase database = this.getReadableDatabase();
-        Cursor cursor = database.rawQuery(selectQuery, null);
+        Cursor cursor = database.rawQuery(selectQuery, new String[] { recording ? "1" : "0" });
         JSONArray results = new JSONArray();
 
         try {
@@ -95,12 +100,13 @@ public class StorageHelper extends SQLiteOpenHelper {
                         state.put("heading", cursor.getFloat(5));
                         state.put("activity_type", cursor.getString(6));
                         state.put("activity_confidence", cursor.getInt(7));
-                        state.put("gps_enabled", cursor.getInt(8));
-                        state.put("low_memory", cursor.getInt(9));
-                        state.put("battery_level", cursor.getInt(10));
-                        state.put("battery_charging", cursor.getInt(11));
-                        state.put("elapsed", cursor.getLong(12));
-                        state.put("timestamp", cursor.getLong(13));
+                        state.put("gps_enabled", cursor.getInt(8) > 0);
+                        state.put("wifi_enabled", cursor.getInt(9) > 0);
+                        state.put("low_memory", cursor.getInt(10) > 0);
+                        state.put("battery_level", cursor.getInt(11));
+                        state.put("battery_charging", cursor.getInt(12) > 0);
+                        state.put("elapsed", cursor.getLong(13));
+                        state.put("timestamp", cursor.getLong(14));
 
                         results.put(state);
                     } catch (JSONException ex) {

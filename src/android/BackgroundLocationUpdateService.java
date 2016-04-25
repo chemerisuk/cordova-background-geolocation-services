@@ -340,7 +340,7 @@ public class BackgroundLocationUpdateService extends Service implements
             Log.d(TAG, "- locationUpdateReceiver: " + location);
         }
 
-        if (location == null || location.getAccuracy() < accuracyFilter) {
+        if (location == null || location.getAccuracy() >= accuracyFilter) {
             return;
         }
 
@@ -396,14 +396,14 @@ public class BackgroundLocationUpdateService extends Service implements
 
                     stopLocationWatching();
 
-                    recordState();
-
                     if (stillActivitiesInterval > 0) {
                         alarmMgr.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                             stillActivitiesInterval, stillActivitiesInterval, stillActivitiesPI);
                     }
                 }
             }
+
+            recordState();
         }
     };
 
@@ -624,11 +624,12 @@ public class BackgroundLocationUpdateService extends Service implements
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
         boolean isRecording = sharedPrefs.contains("##");
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
         activityManager.getMemoryInfo(mi);
 
         storageHelper.append(lastLocation, lastActivity, batteryLevel,
-            isCharging, isRecording, isGPSEnabled, mi.lowMemory);
+            isCharging, isGPSEnabled, isWifiEnabled, mi.lowMemory, isRecording);
     }
 
     @Override
