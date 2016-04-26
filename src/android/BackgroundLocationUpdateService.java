@@ -629,7 +629,7 @@ public class BackgroundLocationUpdateService extends Service implements
         activityManager.getMemoryInfo(mi);
 
         storageHelper.append(lastLocation, lastActivity, batteryLevel,
-            isCharging, isGPSEnabled, isWifiEnabled, mi.lowMemory, isRecording);
+            isCharging, isGPSEnabled, isWifiEnabled, mi.lowMemory, isWatchingLocation, isRecording);
     }
 
     @Override
