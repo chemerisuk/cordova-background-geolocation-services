@@ -370,7 +370,7 @@ public class BackgroundLocationUpdateService extends Service implements
                     startLocationWatching();
                 }
             } else if (lastActivity.getConfidence() >= activitiesConfidence) {
-                if (isWatchingLocation) {
+                if (isWatchingLocation && !sharedPrefs.contains("%%")) {
                     if (isDebugging) {
                         Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
                     }
@@ -380,19 +380,6 @@ public class BackgroundLocationUpdateService extends Service implements
             }
 
             recordState();
-        }
-    };
-
-    private BroadcastReceiver stillActivitiesReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (isDebugging) {
-                Log.d(TAG, "- Still activity check by alarm");
-            }
-
-            stopDetectingActivities();
-
-            startDetectingActivities();
         }
     };
 
@@ -631,12 +618,6 @@ public class BackgroundLocationUpdateService extends Service implements
             unregisterReceiver(detectedActivitiesReceiver);
 
             detectedActivitiesReceiver = null;
-        }
-
-        if (stillActivitiesReceiver != null) {
-            unregisterReceiver(stillActivitiesReceiver);
-
-            stillActivitiesReceiver = null;
         }
 
         if (syncAlarmReceiver != null) {

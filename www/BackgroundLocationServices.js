@@ -64,12 +64,12 @@ module.exports = {
             'getVersion',
             []);
     },
-    startTrackRecording: function(success, failure) {
+    startTrackRecording: function(persistant, success, failure) {
         exec(success || function() {},
              failure || function() {},
              'BackgroundLocationServices',
              'startTrackRecording',
-             []);
+             [persistant || true]);
     },
     stopTrackRecording: function(success, failure) {
         exec(success || function() {},

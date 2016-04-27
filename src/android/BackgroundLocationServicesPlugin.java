@@ -216,7 +216,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if ("startTrackRecording".equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    startTrackRecording();
+                    startTrackRecording(data.getBoolean(0));
 
                     callbackContext.success();
                 }
@@ -244,20 +244,27 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         return result;
     }
 
-    private void startTrackRecording() {
-        if (!sharedPrefs.contains("##")) {
-            sharedPrefsEditor.putBoolean("##", true);
+    private void startTrackRecording(boolean persistent) {
+        String key = persistent ? "##" : "%%";
+
+        if (!sharedPrefs.contains(key)) {
+            sharedPrefsEditor.putBoolean(key, true);
             sharedPrefsEditor.commit();
         }
     }
 
     private void stopTrackRecording() {
+        if (sharedPrefs.contains("%%")) {
+            sharedPrefsEditor.remove("%%");
+        }
+
         if (sharedPrefs.contains("##")) {
             sharedPrefsEditor.remove("##");
-            sharedPrefsEditor.commit();
-
-            storageHelper.readyToSync();
         }
+
+        sharedPrefsEditor.commit();
+
+        storageHelper.readyToSync();
     }
 
     public String getApplicationName(Context context) {
