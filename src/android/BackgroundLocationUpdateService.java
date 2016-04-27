@@ -361,7 +361,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
             if (!isDetectingActivities) return;
 
-            if (lastActivity.getType() != DetectedActivity.STILL) {
+            if (lastActivity.getType() != DetectedActivity.STILL || sharedPrefs.contains("%%")) {
                 if (!isWatchingLocation) {
                     if (isDebugging) {
                         Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
@@ -370,7 +370,7 @@ public class BackgroundLocationUpdateService extends Service implements
                     startLocationWatching();
                 }
             } else if (lastActivity.getConfidence() >= activitiesConfidence) {
-                if (isWatchingLocation && !sharedPrefs.contains("%%")) {
+                if (isWatchingLocation) {
                     if (isDebugging) {
                         Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
                     }
