@@ -69,7 +69,7 @@ module.exports = {
              failure || function() {},
              'BackgroundLocationServices',
              'startTrackRecording',
-             [persistant || true]);
+             [persistant == null ? true : persistant]);
     },
     stopTrackRecording: function(success, failure) {
         exec(success || function() {},
