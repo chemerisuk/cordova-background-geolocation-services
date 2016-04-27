@@ -181,6 +181,8 @@ public class BackgroundLocationUpdateService extends Service implements
         registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE), null, serviceHandler);
 
         broadcastManager = LocalBroadcastManager.getInstance(this);
+        broadcastManager.registerReceiver(startRecordingReceiver, new IntentFilter(Constants.START_RECORDING));
+
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefsEditor = sharedPrefs.edit();
 
@@ -189,7 +191,7 @@ public class BackgroundLocationUpdateService extends Service implements
         wakeLock.acquire();
 
         batteryStatusFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        lastActivity  = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
+        lastActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
 
         alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         Intent alarmIntent = new Intent(Constants.SYNC_ALARM_UPDATE);
@@ -342,6 +344,19 @@ public class BackgroundLocationUpdateService extends Service implements
 
         recordState();
     }
+
+    private BroadcastReceiver startRecordingReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!isWatchingLocation) {
+                if (isDebugging) {
+                    Toast.makeText(context, "Start Recording", Toast.LENGTH_SHORT).show();
+                }
+
+                startLocationWatching();
+            }
+        }
+    };
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
         @Override
@@ -624,6 +639,12 @@ public class BackgroundLocationUpdateService extends Service implements
             unregisterReceiver(syncAlarmReceiver);
 
             syncAlarmReceiver = null;
+        }
+
+        if (startRecordingReceiver != null) {
+            broadcastManager.unregisterReceiver(startRecordingReceiver);
+
+            startRecordingReceiver = null;
         }
 
         if (storageHelper != null) {

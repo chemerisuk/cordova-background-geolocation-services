@@ -257,6 +257,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             sharedPrefsEditor.putBoolean(key, true);
             sharedPrefsEditor.commit();
         }
+
+        broadcastManager.sendBroadcast(new Intent(Constants.START_RECORDING));
     }
 
     private void stopTrackRecording() {
