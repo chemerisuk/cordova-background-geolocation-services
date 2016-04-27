@@ -108,14 +108,11 @@ public class BackgroundLocationUpdateService extends Service implements
     // private PendingIntent locationUpdatePI;
     private GoogleApiClient googleClientAPI;
     private PendingIntent detectedActivitiesPI;
-    private PendingIntent stillActivitiesPI;
 
     private Integer desiredAccuracy = 100;
     private Integer distanceFilter  = 30;
     private Integer activitiesInterval = 0;
-    private Integer stillActivitiesInterval = 0;
     private Integer activitiesConfidence = 75;
-    private Integer accuracyFilter = 1000;
 
     private static final Integer SECONDS_PER_MINUTE      = 60;
     private static final Integer MILLISECONDS_PER_SECOND = 60;
@@ -183,14 +180,6 @@ public class BackgroundLocationUpdateService extends Service implements
         detectedActivitiesPI = PendingIntent.getBroadcast(this, 9002, detectedActivitiesIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE), null, serviceHandler);
 
-        Intent stillActivitiesIntent = new Intent(Constants.STILL_ACTIVITY_UPDATE);
-        if (Build.VERSION.SDK_INT >= 16) {
-            // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
-            stillActivitiesIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        }
-        stillActivitiesPI = PendingIntent.getBroadcast(this, 9003, stillActivitiesIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        registerReceiver(stillActivitiesReceiver, new IntentFilter(Constants.STILL_ACTIVITY_UPDATE), null, serviceHandler);
-
         broadcastManager = LocalBroadcastManager.getInstance(this);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefsEditor = sharedPrefs.edit();
@@ -229,9 +218,7 @@ public class BackgroundLocationUpdateService extends Service implements
             fastestInterval      = Integer.parseInt(intent.getStringExtra("fastestInterval"));
             aggressiveInterval   = Integer.parseInt(intent.getStringExtra("aggressiveInterval"));
             activitiesInterval   = Integer.parseInt(intent.getStringExtra("activitiesInterval"));
-            stillActivitiesInterval = Integer.parseInt(intent.getStringExtra("stillActivitiesInterval"));
             activitiesConfidence = Integer.parseInt(intent.getStringExtra("activitiesConfidence"));
-            accuracyFilter       = Integer.parseInt(intent.getStringExtra("accuracyFilter"));
 
             isDebugging = Boolean.parseBoolean(intent.getStringExtra("isDebugging"));
             notificationTitle = intent.getStringExtra("notificationTitle");
@@ -291,13 +278,11 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "- fastestInterval: "      + fastestInterval);
 
         Log.i(TAG, "- distanceFilter: "     + distanceFilter);
-        Log.i(TAG, "- accuracyFilter: "     + accuracyFilter);
         Log.i(TAG, "- desiredAccuracy: "    + desiredAccuracy);
         Log.i(TAG, "- isDebugging: "        + isDebugging);
         Log.i(TAG, "- notificationTitle: "  + notificationTitle);
         Log.i(TAG, "- notificationText: "   + notificationText);
         Log.i(TAG, "- activitiesInterval: "   + activitiesInterval);
-        Log.i(TAG, "- stillActivitiesInterval: "   + stillActivitiesInterval);
         Log.i(TAG, "- activitiesConfidence: "   + activitiesConfidence);
         Log.i(TAG, "- syncUrl: "  + syncUrl);
         Log.i(TAG, "- syncInterval: "   + syncInterval);
@@ -340,7 +325,7 @@ public class BackgroundLocationUpdateService extends Service implements
             Log.d(TAG, "- locationUpdateReceiver: " + location);
         }
 
-        if (location == null || location.getAccuracy() >= accuracyFilter) {
+        if (location == null) {
             return;
         }
 
@@ -383,10 +368,6 @@ public class BackgroundLocationUpdateService extends Service implements
                     }
 
                     startLocationWatching();
-
-                    if (stillActivitiesInterval > 0) {
-                        alarmMgr.cancel(stillActivitiesPI);
-                    }
                 }
             } else if (lastActivity.getConfidence() >= activitiesConfidence) {
                 if (isWatchingLocation) {
@@ -395,11 +376,6 @@ public class BackgroundLocationUpdateService extends Service implements
                     }
 
                     stopLocationWatching();
-
-                    if (stillActivitiesInterval > 0) {
-                        alarmMgr.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                            stillActivitiesInterval, stillActivitiesInterval, stillActivitiesPI);
-                    }
                 }
             }
 

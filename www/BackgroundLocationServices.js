@@ -14,13 +14,11 @@ module.exports = {
             notificationText    = config.notificationText  || "ENABLED",
             keepAlive           = config.keepAlive || false,
             activitiesInterval  = config.activitiesInterval || 0,
-            stillActivitiesInterval = config.stillActivitiesInterval || 0,
             activitiesConfidence = config.activitiesConfidence || 75,
             keepAwake           = config.keepAwake || false,
             syncUrl             = config.syncUrl || "",
             syncInterval        = config.syncInterval || 600,
-            deviceToken         = config.deviceToken || "",
-            accuracyFilter      = config.accuracyFilter || 1000;
+            deviceToken         = config.deviceToken || "";
 
         exec(success || function() {},
              failure || function() {},

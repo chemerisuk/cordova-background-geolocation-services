@@ -57,7 +57,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private String fastestInterval = "60000";
     private String aggressiveInterval = "4000";
     private String activitiesInterval = "0";
-    private String stillActivitiesInterval = "0";
     private String activitiesConfidence = "75";
     private String accuracyFilter = "1000";
     private String syncUrl = "";
@@ -175,8 +174,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             updateServiceIntent.putExtra("syncUrl", syncUrl);
             updateServiceIntent.putExtra("syncInterval", syncInterval);
             updateServiceIntent.putExtra("deviceToken", deviceToken);
-            updateServiceIntent.putExtra("accuracyFilter", accuracyFilter);
-            updateServiceIntent.putExtra("stillActivitiesInterval", stillActivitiesInterval);
 
             bindServiceToWebview(activity, updateServiceIntent);
 
@@ -187,8 +184,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             try {
-                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, accuracyFilter, stillActivitiesInterval]
-                //  0               1                2         3                4                   5      6                   7                8           9          10                  11                    12       13            14           15              16
+                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken]
+                //  0               1                2         3                4                   5      6                   7                8           9          10                  11                    12       13            14
                 this.distanceFilter = data.getString(0);
                 this.desiredAccuracy = data.getString(1);
                 this.interval = data.getString(2);
@@ -204,8 +201,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 this.syncUrl = data.getString(12);
                 this.syncInterval = data.getString(13);
                 this.deviceToken = data.getString(14);
-                this.accuracyFilter = data.getString(15);
-                this.stillActivitiesInterval = data.getString(16);
 
                 callbackContext.success();
             } catch (JSONException e) {
