@@ -251,10 +251,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     private void startTrackRecording(boolean persistent) {
-        String key = persistent ? "##" : "%%";
-
-        if (!sharedPrefs.contains(key)) {
-            sharedPrefsEditor.putBoolean(key, true);
+        if (persistent) {
+            sharedPrefsEditor.putBoolean("##", true);
             sharedPrefsEditor.commit();
         }
 
@@ -262,10 +260,6 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     private void stopTrackRecording() {
-        if (sharedPrefs.contains("%%")) {
-            sharedPrefsEditor.remove("%%");
-        }
-
         if (sharedPrefs.contains("##")) {
             sharedPrefsEditor.remove("##");
         }
