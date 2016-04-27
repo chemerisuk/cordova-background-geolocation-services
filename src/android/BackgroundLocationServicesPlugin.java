@@ -214,9 +214,11 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if(ACTION_REGISTER_FOR_ACTIVITY_UPDATES.equalsIgnoreCase(action)) {
             detectedActivitiesCallback = callbackContext;
         } else if ("startTrackRecording".equalsIgnoreCase(action)) {
+            final boolean persistent = data.getBoolean(0);
+
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    startTrackRecording(data.getBoolean(0));
+                    startTrackRecording(persistent);
 
                     callbackContext.success();
                 }
