@@ -384,6 +384,8 @@ public class BackgroundLocationUpdateService extends Service implements
 
                     stopLocationWatching();
                 }
+
+                recordState();
             } else {
                 if (!isWatchingLocation) {
                     if (isDebugging) {
@@ -393,8 +395,6 @@ public class BackgroundLocationUpdateService extends Service implements
                     startLocationWatching();
                 }
             }
-
-            recordState();
         }
     };
 
