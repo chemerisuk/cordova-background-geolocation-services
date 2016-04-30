@@ -141,7 +141,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private LocationManager locationManager;
     private LocationRequest locationRequest;
     private volatile Looper serviceLooper;
-    private volatile Handler serviceHandler;
+    private volatile Looper syncLooper;
 
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
@@ -166,11 +166,15 @@ public class BackgroundLocationUpdateService extends Service implements
         super.onCreate();
         Log.i(TAG, "OnCreate");
 
-        HandlerThread thread = new HandlerThread("HandlerThread[" + TAG + "]");
-        thread.start();
+        HandlerThread thread1 = new HandlerThread("HandlerThread[" + TAG + "#1]");
+        thread1.start();
 
-        serviceLooper = thread.getLooper();
-        serviceHandler = new Handler(serviceLooper);
+        serviceLooper = thread1.getLooper();
+
+        HandlerThread thread2 = new HandlerThread("HandlerThread[" + TAG + "#2]");
+        thread2.start();
+
+        syncLooper = thread2.getLooper();
 
         Intent detectedActivitiesIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
         if (Build.VERSION.SDK_INT >= 16) {
@@ -178,7 +182,7 @@ public class BackgroundLocationUpdateService extends Service implements
             detectedActivitiesIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
         detectedActivitiesPI = PendingIntent.getBroadcast(this, 9002, detectedActivitiesIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE), null, serviceHandler);
+        registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE), null, new Handler(serviceLooper));
 
         broadcastManager = LocalBroadcastManager.getInstance(this);
         broadcastManager.registerReceiver(startRecordingReceiver, new IntentFilter(Constants.START_RECORDING));
@@ -200,7 +204,7 @@ public class BackgroundLocationUpdateService extends Service implements
             alarmIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
         alarmPI = PendingIntent.getBroadcast(this, 9004, alarmIntent, 0);
-        registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE), null, serviceHandler);
+        registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE), null, new Handler(syncLooper));
 
         storageHelper = new StorageHelper(this);
 
@@ -655,6 +659,7 @@ public class BackgroundLocationUpdateService extends Service implements
         }
 
         serviceLooper.quit();
+        syncLooper.quit();
 
         wakeLock.release();
     }
