@@ -119,6 +119,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private long  interval             = (long)  SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND * 5;
     private long  fastestInterval      = (long)  SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
     private long  aggressiveInterval   = (long) MILLISECONDS_PER_SECOND * 4;
+    private long  stillInterval        = 0;
 
     private Location lastLocation;
     private DetectedActivity lastActivity;
@@ -136,6 +137,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
     private Boolean isDetectingActivities = false;
     private Boolean isWatchingLocation = false;
+    private boolean isStillMode = false;
     private boolean startRecordingOnConnect = true;
 
     private LocationManager locationManager;
@@ -217,6 +219,7 @@ public class BackgroundLocationUpdateService extends Service implements
             desiredAccuracy = Integer.parseInt(intent.getStringExtra("desiredAccuracy"));
 
             interval             = Integer.parseInt(intent.getStringExtra("interval"));
+            stillInterval        = Integer.parseInt(intent.getStringExtra("stillInterval"));
             fastestInterval      = Integer.parseInt(intent.getStringExtra("fastestInterval"));
             aggressiveInterval   = Integer.parseInt(intent.getStringExtra("aggressiveInterval"));
             activitiesInterval   = Integer.parseInt(intent.getStringExtra("activitiesInterval"));
@@ -234,8 +237,6 @@ public class BackgroundLocationUpdateService extends Service implements
             } catch (MalformedURLException ex) {
                 Log.d(TAG, "- Invalid sync url specified", ex);
             }
-
-            preventSleepWhenRecording = Boolean.parseBoolean(intent.getStringExtra("preventSleepWhenRecording"));
 
             // Build the notification
             Notification.Builder builder = new Notification.Builder(this)
@@ -279,6 +280,7 @@ public class BackgroundLocationUpdateService extends Service implements
         // Log.i(TAG, "- url: " + url);
         // Log.i(TAG, "- params: "  + params.toString());
         Log.i(TAG, "- interval: "             + interval);
+        Log.i(TAG, "- stillInterval: "        + stillInterval);
         Log.i(TAG, "- fastestInterval: "      + fastestInterval);
 
         Log.i(TAG, "- distanceFilter: "     + distanceFilter);
@@ -291,8 +293,7 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "- syncUrl: "  + syncUrl);
         Log.i(TAG, "- syncInterval: "   + syncInterval);
         Log.i(TAG, "- deviceToken: "   + deviceToken);
-
-        //We want this service to continue running until it is explicitly stopped
+        // We want this service to continue running until it is explicitly stopped
         return START_REDELIVER_INTENT;
     }
 
@@ -379,17 +380,23 @@ public class BackgroundLocationUpdateService extends Service implements
             if (!isDetectingActivities) return;
 
             if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= activitiesConfidence) {
-                if (isWatchingLocation && (!preventSleepWhenRecording || !sharedPrefs.contains("##"))) {
+                if (!isStillMode) {
+                    isStillMode = true;
+
                     if (isDebugging) {
                         Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
                     }
 
                     stopLocationWatching();
-                }
 
-                recordState();
+                    if (stillInterval > 0 && sharedPrefs.contains("##")) {
+                        startLocationWatching();
+                    }
+                }
             } else {
-                if (!isWatchingLocation) {
+                if (isStillMode) {
+                    isStillMode = false;
+
                     if (isDebugging) {
                         Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
                     }
@@ -483,7 +490,7 @@ public class BackgroundLocationUpdateService extends Service implements
             locationRequest = LocationRequest.create()
                     .setPriority(translateDesiredAccuracy(desiredAccuracy))
                     .setFastestInterval(fastestInterval)
-                    .setInterval(interval)
+                    .setInterval(isStillMode && stillInterval > 0 ? stillInterval : interval)
                     .setSmallestDisplacement(distanceFilter);
 
             this.isWatchingLocation = true;
@@ -587,7 +594,7 @@ public class BackgroundLocationUpdateService extends Service implements
         } else if(accuracy <= 10000) {
             accuracy = LocationRequest.PRIORITY_NO_POWER;
         } else {
-          accuracy = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
+            accuracy = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
         }
 
         return accuracy;
@@ -607,7 +614,7 @@ public class BackgroundLocationUpdateService extends Service implements
         boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
         storageHelper.append(lastLocation, lastActivity, batteryLevel,
-            isCharging, isGPSEnabled, isWifiEnabled, isWatchingLocation, isRecording);
+            isCharging, isGPSEnabled, isWifiEnabled, !isStillMode, isRecording);
     }
 
     @Override

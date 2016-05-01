@@ -7,6 +7,7 @@ module.exports = {
         var distanceFilter      = (config.distanceFilter   >= 0) ? config.distanceFilter   : 500, // meters
             desiredAccuracy     = (config.desiredAccuracy  >= 0) ? config.desiredAccuracy  : 100, // meters
             interval            = (config.interval         >= 0) ? config.interval        : 900000, // milliseconds
+            stillInterval       = (config.stillInterval    >= 0) ? config.stillInterval : 900000,
             fastestInterval     = (config.fastestInterval  >= 0) ? config.fastestInterval : 120000, // milliseconds
             aggressiveInterval  = (config.aggressiveInterval > 0) ? config.aggressiveInterval : 4000, //mulliseconds
             debug               = config.debug || false,
@@ -18,14 +19,13 @@ module.exports = {
             keepAwake           = config.keepAwake || false,
             syncUrl             = config.syncUrl || "",
             syncInterval        = config.syncInterval || 600,
-            deviceToken         = config.deviceToken || "",
-            preventSleepWhenRecording = config.preventSleepWhenRecording || true;
+            deviceToken         = config.deviceToken || "";
 
         exec(success || function() {},
              failure || function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, preventSleepWhenRecording]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {
