@@ -132,6 +132,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private URL syncUrl;
     private int syncInterval;
     private String deviceToken;
+    private boolean preventSleepWhenRecording = true;
 
     private Boolean isDetectingActivities = false;
     private Boolean isWatchingLocation = false;
@@ -233,6 +234,8 @@ public class BackgroundLocationUpdateService extends Service implements
             } catch (MalformedURLException ex) {
                 Log.d(TAG, "- Invalid sync url specified", ex);
             }
+
+            preventSleepWhenRecording = Boolean.parseBoolean(intent.getStringExtra("preventSleepWhenRecording"));
 
             // Build the notification
             Notification.Builder builder = new Notification.Builder(this)
@@ -376,7 +379,7 @@ public class BackgroundLocationUpdateService extends Service implements
             if (!isDetectingActivities) return;
 
             if (lastActivity.getType() == DetectedActivity.STILL && lastActivity.getConfidence() >= activitiesConfidence) {
-                if (isWatchingLocation) {
+                if (isWatchingLocation && (!preventSleepWhenRecording || !sharedPrefs.contains("##"))) {
                     if (isDebugging) {
                         Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
                     }

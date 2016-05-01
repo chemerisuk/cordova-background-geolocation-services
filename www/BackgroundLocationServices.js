@@ -18,13 +18,14 @@ module.exports = {
             keepAwake           = config.keepAwake || false,
             syncUrl             = config.syncUrl || "",
             syncInterval        = config.syncInterval || 600,
-            deviceToken         = config.deviceToken || "";
+            deviceToken         = config.deviceToken || "",
+            preventSleepWhenRecording = config.preventSleepWhenRecording || true;
 
         exec(success || function() {},
              failure || function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, preventSleepWhenRecording]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {
