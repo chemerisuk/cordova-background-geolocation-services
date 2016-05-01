@@ -487,10 +487,13 @@ public class BackgroundLocationUpdateService extends Service implements
         if (googleClientAPI == null) {
             connectToPlayAPI();
         } else if (googleClientAPI.isConnected()) {
+            long currentInterval = isStillMode && stillInterval > 0 ? stillInterval : interval;
+            long currentFastestInterval = isStillMode && stillInterval > 0 ? interval : fastestInterval;
+
             locationRequest = LocationRequest.create()
                     .setPriority(translateDesiredAccuracy(desiredAccuracy))
-                    .setFastestInterval(fastestInterval)
-                    .setInterval(isStillMode && stillInterval > 0 ? stillInterval : interval)
+                    .setInterval(currentInterval)
+                    .setFastestInterval(currentFastestInterval)
                     .setSmallestDisplacement(distanceFilter);
 
             this.isWatchingLocation = true;
