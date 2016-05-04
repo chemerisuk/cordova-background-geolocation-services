@@ -40,9 +40,7 @@ public class BackgroundLocationUploadService extends IntentService {
         int resultsCount = results.length();
 
         if (resultsCount > 0) {
-            // if (isDebugging) {
-            //     Log.d(TAG, "- Send " + resultsCount + " records to server");
-            // }
+            Log.d(TAG, "- Send " + resultsCount + " records to server");
 
             HttpURLConnection http = null;
 
@@ -61,9 +59,9 @@ public class BackgroundLocationUploadService extends IntentService {
                     storageHelper.cleanup(lastResult.getLong("timestamp"));
                 }
             } catch (IOException ex) {
-                Log.d(TAG, "- fail to send records", ex);
+                Log.e(TAG, "- fail to send records", ex);
             } catch (JSONException ex) {
-                Log.d(TAG, "- fail to cleanup records", ex);
+                Log.e(TAG, "- fail to cleanup records", ex);
             } finally {
                 if (http != null) {
                     http.disconnect();
