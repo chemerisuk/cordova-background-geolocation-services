@@ -4,9 +4,6 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.Random;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.annotation.TargetApi;
 
 import android.media.AudioManager;
@@ -86,12 +83,6 @@ import android.os.PowerManager.WakeLock;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.HttpURLConnection;
-import java.io.IOException;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.json.JSONException;
 
 
 public class BackgroundLocationUpdateService extends Service implements
@@ -143,7 +134,6 @@ public class BackgroundLocationUpdateService extends Service implements
     private LocationManager locationManager;
     private LocationRequest locationRequest;
     private volatile Looper serviceLooper;
-    private volatile Looper syncLooper;
 
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
@@ -169,11 +159,6 @@ public class BackgroundLocationUpdateService extends Service implements
         thread1.start();
 
         serviceLooper = thread1.getLooper();
-
-        HandlerThread thread2 = new HandlerThread("HandlerThread[" + TAG + "#2]");
-        thread2.start();
-
-        syncLooper = thread2.getLooper();
 
         Intent detectedActivitiesIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
         if (Build.VERSION.SDK_INT >= 16) {
@@ -203,7 +188,7 @@ public class BackgroundLocationUpdateService extends Service implements
             alarmIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
         alarmPI = PendingIntent.getBroadcast(this, 9004, alarmIntent, 0);
-        registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE), null, new Handler(syncLooper));
+        registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE));
 
         storageHelper = new StorageHelper(this);
 
@@ -414,40 +399,12 @@ public class BackgroundLocationUpdateService extends Service implements
                 Log.d(TAG, "- Sync local db started by alarm");
             }
 
-            JSONArray results = storageHelper.serialize(false, 300);
-            int resultsCount = results.length();
+            Intent intent = new Intent(this, BackgroundLocationUploadService.class);
 
-            if (resultsCount > 0) {
-                if (isDebugging) {
-                    Log.d(TAG, "- Send " + resultsCount + " records to server");
-                }
+            intent.putExtra(BackgroundLocationUploadService.URL_EXTRA, syncUrl);
+            intent.putExtra(BackgroundLocationUploadService.TOKEN_EXTRA, deviceToken);
 
-                HttpURLConnection http = null;
-
-                try {
-                    http = (HttpURLConnection) syncUrl.openConnection();
-                    http.setDoOutput(true);
-                    http.setRequestMethod("POST");
-                    http.setRequestProperty("Authorization", deviceToken);
-                    http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                    // send data to server
-                    http.getOutputStream().write(results.toString().getBytes("UTF-8"));
-
-                    if (http.getResponseCode() == 200) {
-                        JSONObject lastResult = (JSONObject) results.get(results.length() - 1);
-
-                        storageHelper.cleanup(lastResult.getLong("timestamp"));
-                    }
-                } catch (IOException ex) {
-                    Log.d(TAG, "- fail to send records", ex);
-                } catch (JSONException ex) {
-                    Log.d(TAG, "- fail to cleanup records", ex);
-                } finally {
-                    if (http != null) {
-                        http.disconnect();
-                    }
-                }
-            }
+            startService(intent);
         }
     };
 
@@ -665,7 +622,6 @@ public class BackgroundLocationUpdateService extends Service implements
         }
 
         serviceLooper.quit();
-        syncLooper.quit();
 
         wakeLock.release();
     }
