@@ -20,6 +20,10 @@ public class BackgroundLocationUploadService extends IntentService {
 
     private StorageHelper storageHelper;
 
+    public BackgroundLocationUploadService() {
+        super(TAG);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
