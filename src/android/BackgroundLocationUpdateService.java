@@ -399,12 +399,12 @@ public class BackgroundLocationUpdateService extends Service implements
                 Log.d(TAG, "- Sync local db started by alarm");
             }
 
-            Intent intent = new Intent(this, BackgroundLocationUploadService.class);
+            Intent serviceIntent = new Intent(this, BackgroundLocationUploadService.class);
 
-            intent.putExtra(BackgroundLocationUploadService.URL_EXTRA, syncUrl);
-            intent.putExtra(BackgroundLocationUploadService.TOKEN_EXTRA, deviceToken);
+            serviceIntent.putExtra(BackgroundLocationUploadService.URL_EXTRA, syncUrl);
+            serviceIntent.putExtra(BackgroundLocationUploadService.TOKEN_EXTRA, deviceToken);
 
-            startService(intent);
+            startService(serviceIntent);
         }
     };
 
