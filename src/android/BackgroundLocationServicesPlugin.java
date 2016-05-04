@@ -75,6 +75,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private CallbackContext locationUpdateCallback = null;
     private CallbackContext detectedActivitiesCallback = null;
 
+    private LocationManager locationManager;
     private LocalBroadcastManager broadcastManager;
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
@@ -120,10 +121,12 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
                     Location location = intent.getParcelableExtra(Constants.LOCATION_EXTRA);
+                    boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                    boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
                     if (location != null) {
-                        JSONObject data = locationToJSON(location);
-                        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, data);
+                        JSONObject state = locationToJSON(location, isGPSEnabled, isNetworkEnabled);
+                        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, state);
                         pluginResult.setKeepCallback(true);
                         locationUpdateCallback.sendPluginResult(pluginResult);
                     }
@@ -148,6 +151,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
       broadcastManager = LocalBroadcastManager.getInstance(activity.getApplicationContext());
       storageHelper = new StorageHelper(activity.getApplicationContext());
+
+      locationManager = (LocationManager)activity.getSystemService(Context.LOCATION_SERVICE);
     }
 
     public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) {
@@ -309,24 +314,26 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         isEnabled = false;
     }
 
-    private JSONObject locationToJSON(Location location) {
-        JSONObject data = new JSONObject();
+    private JSONObject locationToJSON(Location location, boolean isGPSEnabled, boolean isNetworkEnabled) {
+        JSONObject state = new JSONObject();
 
         try {
-            data.put("latitude", location.getLatitude());
-            data.put("longitude", location.getLongitude());
-            data.put("accuracy", location.getAccuracy());
-            data.put("altitude", location.getAltitude());
-            data.put("timestamp", location.getTime());
-            data.put("speed", location.getSpeed());
-            data.put("heading", location.getBearing());
+            state.put("latitude", location.getLatitude());
+            state.put("longitude", location.getLongitude());
+            state.put("accuracy", location.getAccuracy());
+            state.put("altitude", location.getAltitude());
+            state.put("timestamp", location.getTime());
+            state.put("speed", location.getSpeed());
+            state.put("heading", location.getBearing());
+            state.put("gps_enabled", isGPSEnabled);
+            state.put("network_enabled", isNetworkEnabled);
         } catch(JSONException e) {
             Log.d(TAG, "ERROR CREATING JSON" + e);
         }
 
         lastLocation = location;
 
-        return data;
+        return state;
     }
 
 
