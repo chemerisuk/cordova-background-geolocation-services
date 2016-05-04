@@ -1,5 +1,6 @@
 package com.flybuy.cordova.location;
 
+import android.util.Log;
 import android.app.IntentService;
 import android.content.Intent;
 
@@ -12,6 +13,8 @@ import org.json.JSONObject;
 import org.json.JSONException;
 
 public class BackgroundLocationUploadService extends IntentService {
+    private static final String TAG = "BackgroundLocationUpdateService";
+
     static final String URL_EXTRA = "url";
     static final String TOKEN_EXTRA = "token";
 
@@ -33,9 +36,9 @@ public class BackgroundLocationUploadService extends IntentService {
         int resultsCount = results.length();
 
         if (resultsCount > 0) {
-            if (isDebugging) {
-                Log.d(TAG, "- Send " + resultsCount + " records to server");
-            }
+            // if (isDebugging) {
+            //     Log.d(TAG, "- Send " + resultsCount + " records to server");
+            // }
 
             HttpURLConnection http = null;
 

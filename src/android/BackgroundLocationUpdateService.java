@@ -155,10 +155,10 @@ public class BackgroundLocationUpdateService extends Service implements
         super.onCreate();
         Log.i(TAG, "OnCreate");
 
-        HandlerThread thread1 = new HandlerThread("HandlerThread[" + TAG + "#1]");
-        thread1.start();
+        HandlerThread thread = new HandlerThread("HandlerThread[" + TAG + "#1]");
+        thread.start();
 
-        serviceLooper = thread1.getLooper();
+        serviceLooper = thread.getLooper();
 
         Intent detectedActivitiesIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
         if (Build.VERSION.SDK_INT >= 16) {
@@ -399,7 +399,7 @@ public class BackgroundLocationUpdateService extends Service implements
                 Log.d(TAG, "- Sync local db started by alarm");
             }
 
-            Intent serviceIntent = new Intent(this, BackgroundLocationUploadService.class);
+            Intent serviceIntent = new Intent(context, BackgroundLocationUploadService.class);
 
             serviceIntent.putExtra(BackgroundLocationUploadService.URL_EXTRA, syncUrl);
             serviceIntent.putExtra(BackgroundLocationUploadService.TOKEN_EXTRA, deviceToken);
