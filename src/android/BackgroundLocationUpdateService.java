@@ -227,7 +227,8 @@ public class BackgroundLocationUpdateService extends Service implements
             Notification.Builder builder = new Notification.Builder(this)
                 .setContentTitle(notificationTitle)
                 .setContentText(notificationText)
-                .setSmallIcon(getIconResId());
+                .setSmallIcon(getIconResId())
+                .setColor(0xFF333333);
 
             // Make clicking the event link back to the main cordova activity
             setClickEvent(builder);
