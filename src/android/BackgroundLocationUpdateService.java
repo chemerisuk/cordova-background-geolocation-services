@@ -337,6 +337,8 @@ public class BackgroundLocationUpdateService extends Service implements
         @Override
         public void onReceive(Context context, Intent intent) {
             if (!isWatchingLocation) {
+                isStillMode = false;
+
                 if (isDebugging) {
                     Toast.makeText(context, "Start Recording", Toast.LENGTH_SHORT).show();
                 }
