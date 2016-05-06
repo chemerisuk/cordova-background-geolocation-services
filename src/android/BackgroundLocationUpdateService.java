@@ -78,6 +78,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.app.NotificationCompat;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 
@@ -224,24 +225,22 @@ public class BackgroundLocationUpdateService extends Service implements
             }
 
             // Build the notification
-            Notification.Builder builder = new Notification.Builder(this)
+            Context context     = getApplicationContext();
+            String packageName  = context.getPackageName();
+            Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+            PendingIntent contentIntent = PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+                .setContentIntent(contentIntent)
                 .setContentTitle(notificationTitle)
                 .setContentText(notificationText)
                 .setSmallIcon(getIconResId())
                 .setColor(0xFF333333);
 
-            // Make clicking the event link back to the main cordova activity
-            setClickEvent(builder);
-
-            Notification notification;
-
-            if (Build.VERSION.SDK_INT < 16) {
-                // Build notification for HoneyComb to ICS
-                notification = builder.getNotification();
-            } else {
-                // Notification for Jellybean and above
-                notification = builder.build();
-            }
+            Notification notification = builder.build();
 
             notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR;
             notification.contentView.setImageViewResource(android.R.id.icon, getApplicationInfo().icon);
@@ -408,23 +407,6 @@ public class BackgroundLocationUpdateService extends Service implements
             startService(serviceIntent);
         }
     };
-
-    /**
-     * Adds an onclick handler to the notification
-     */
-    private Notification.Builder setClickEvent (Notification.Builder notification) {
-        Context context     = getApplicationContext();
-        String packageName  = context.getPackageName();
-        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
-
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-        int requestCode = new Random().nextInt();
-
-        PendingIntent contentIntent = PendingIntent.getActivity(context, requestCode, launchIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        return notification.setContentIntent(contentIntent);
-    }
 
     protected synchronized void connectToPlayAPI() {
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
