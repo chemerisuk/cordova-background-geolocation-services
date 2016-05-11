@@ -22,10 +22,10 @@ public class StorageHelper extends SQLiteOpenHelper {
     private static StorageHelper instance;
 
     public StorageHelper(Context context) {
-        super(applicationcontext, "locationstates.db", null, 8);
+        super(context, "locationstates.db", null, 8);
     }
 
-    public static synchronized DatabaseHelper getInstance(Context context) {
+    public static synchronized StorageHelper getInstance(Context context) {
         if (instance == null) {
             instance = new StorageHelper(context);
         }
