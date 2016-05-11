@@ -27,7 +27,7 @@ public class BackgroundLocationUploadService extends IntentService {
         URL syncUrl = (URL)intent.getSerializableExtra(BackgroundLocationUploadService.URL_EXTRA);
         String deviceToken = intent.getStringExtra(BackgroundLocationUploadService.TOKEN_EXTRA);
 
-        JSONArray results = StorageHelper.getInstance(this).serialize(false, 300);
+        JSONArray results = StorageHelper.getInstance(this).serialize(false, 250);
         int resultsCount = results.length();
 
         if (resultsCount > 0) {
