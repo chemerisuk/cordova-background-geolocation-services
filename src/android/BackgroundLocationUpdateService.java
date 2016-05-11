@@ -343,6 +343,13 @@ public class BackgroundLocationUpdateService extends Service implements
                     Toast.makeText(context, "Start Recording", Toast.LENGTH_SHORT).show();
                 }
 
+                // sometimes activity detection frozees so restart to wakeup
+                if (activitiesInterval > 0) {
+                    stopDetectingActivities();
+
+                    startDetectingActivities();
+                }
+
                 startLocationWatching();
             }
         }
