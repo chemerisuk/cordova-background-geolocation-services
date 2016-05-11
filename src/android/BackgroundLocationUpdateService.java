@@ -115,7 +115,6 @@ public class BackgroundLocationUpdateService extends Service implements
 
     private Location lastLocation;
     private DetectedActivity lastActivity;
-    private StorageHelper storageHelper;
     private IntentFilter batteryStatusFilter;
 
     private Boolean isDebugging;
@@ -190,8 +189,6 @@ public class BackgroundLocationUpdateService extends Service implements
         }
         alarmPI = PendingIntent.getBroadcast(this, 9004, alarmIntent, 0);
         registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE));
-
-        storageHelper = new StorageHelper(this);
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     }
@@ -565,7 +562,7 @@ public class BackgroundLocationUpdateService extends Service implements
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
-        storageHelper.append(lastLocation, lastActivity, batteryLevel,
+        StorageHelper.getInstance(this).append(lastLocation, lastActivity, batteryLevel,
             isCharging, isGPSEnabled, isWifiEnabled, !isStillMode, isRecording);
     }
 
@@ -606,7 +603,7 @@ public class BackgroundLocationUpdateService extends Service implements
             startRecordingReceiver = null;
         }
 
-        if (storageHelper != null) {
+        if (locationManager != null) {
             // use OTHER activity to remember when service stops
             lastActivity = new DetectedActivity(-1, 100);
 

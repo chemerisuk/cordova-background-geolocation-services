@@ -19,9 +19,18 @@ import org.json.JSONException;
 
 public class StorageHelper extends SQLiteOpenHelper {
     private static final String TAG = "BackgroundLocationUpdateService";
+    private static StorageHelper instance;
 
-    public StorageHelper(Context applicationcontext) {
+    public StorageHelper(Context context) {
         super(applicationcontext, "locationstates.db", null, 8);
+    }
+
+    public static synchronized DatabaseHelper getInstance(Context context) {
+        if (instance == null) {
+            instance = new StorageHelper(context);
+        }
+
+        return instance;
     }
 
     @Override

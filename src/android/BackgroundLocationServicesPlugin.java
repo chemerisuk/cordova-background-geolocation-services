@@ -79,7 +79,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private LocalBroadcastManager broadcastManager;
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
-    private StorageHelper storageHelper;
+
 
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
         @Override
@@ -150,13 +150,13 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
       sharedPrefsEditor = sharedPrefs.edit();
 
       broadcastManager = LocalBroadcastManager.getInstance(activity.getApplicationContext());
-      storageHelper = new StorageHelper(activity.getApplicationContext());
 
       locationManager = (LocationManager)activity.getSystemService(Context.LOCATION_SERVICE);
     }
 
     public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) {
         Activity activity = this.cordova.getActivity();
+        final Context context = activity.getApplicationContext();
 
         Boolean result = true;
 
@@ -247,7 +247,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    JSONArray states = storageHelper.serialize(true, -1);
+                    JSONArray states = StorageHelper.getInstance(context).serialize(true, -1);
 
                     callbackContext.success(states);
                 }
@@ -269,17 +269,20 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     private void stopTrackRecording() {
+        Activity activity = this.cordova.getActivity();
+        Context context = activity.getApplicationContext();
+
         if (sharedPrefs.contains("##")) {
             sharedPrefsEditor.remove("##");
         }
 
         sharedPrefsEditor.commit();
 
-        storageHelper.readyToSync();
+        StorageHelper.getInstance(context).readyToSync();
     }
 
     public String getApplicationName(Context context) {
-      return context.getApplicationInfo().loadLabel(context.getPackageManager()).toString();
+        return context.getApplicationInfo().loadLabel(context.getPackageManager()).toString();
     }
 
     public Boolean debug() {

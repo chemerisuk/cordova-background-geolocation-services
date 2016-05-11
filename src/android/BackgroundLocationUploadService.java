@@ -18,17 +18,8 @@ public class BackgroundLocationUploadService extends IntentService {
     static final String URL_EXTRA = "url";
     static final String TOKEN_EXTRA = "token";
 
-    private StorageHelper storageHelper;
-
     public BackgroundLocationUploadService() {
         super(TAG);
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        storageHelper = new StorageHelper(this);
     }
 
     @Override
@@ -36,7 +27,7 @@ public class BackgroundLocationUploadService extends IntentService {
         URL syncUrl = (URL)intent.getSerializableExtra(BackgroundLocationUploadService.URL_EXTRA);
         String deviceToken = intent.getStringExtra(BackgroundLocationUploadService.TOKEN_EXTRA);
 
-        JSONArray results = storageHelper.serialize(false, 300);
+        JSONArray results = StorageHelper.getInstance(this).serialize(false, 300);
         int resultsCount = results.length();
 
         if (resultsCount > 0) {
@@ -56,7 +47,7 @@ public class BackgroundLocationUploadService extends IntentService {
                 if (http.getResponseCode() == 200) {
                     JSONObject lastResult = (JSONObject) results.get(results.length() - 1);
 
-                    storageHelper.cleanup(lastResult.getLong("timestamp"));
+                    StorageHelper.getInstance(this).cleanup(lastResult.getLong("timestamp"));
                 }
             } catch (IOException ex) {
                 Log.e(TAG, "- fail to send records", ex);
