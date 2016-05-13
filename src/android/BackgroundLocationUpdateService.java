@@ -340,11 +340,12 @@ public class BackgroundLocationUpdateService extends Service implements
                     Toast.makeText(context, "Start Recording", Toast.LENGTH_SHORT).show();
                 }
 
-                // sometimes activity detection frozees so restart to wakeup
                 if (activitiesInterval > 0) {
                     stopDetectingActivities();
-
+                    // sometimes activity detection freezes so restart to wakeup
                     startDetectingActivities();
+                    // reset current activity value
+                    lastActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
                 }
 
                 startLocationWatching();
@@ -550,7 +551,7 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void recordState() {
-        if (lastLocation == null || lastActivity == null || lastActivity.getConfidence() == 0) return;
+        if (lastLocation == null || lastActivity == null) return;
 
         Intent batteryStatus = registerReceiver(null, batteryStatusFilter);
         int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
