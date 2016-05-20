@@ -77,12 +77,15 @@ public class StorageHelper extends SQLiteOpenHelper {
         if (rowId <= 0) {
             Log.e(TAG, "Failed to insert row into states");
         }
+
+        database.close();
     }
 
     public void readyToSync() {
         SQLiteDatabase database = this.getWritableDatabase();
 
         database.execSQL("UPDATE states SET recording = 0");
+        database.close();
     }
 
     public JSONArray serialize(boolean recording, int limit) {
@@ -138,5 +141,6 @@ public class StorageHelper extends SQLiteOpenHelper {
         SQLiteDatabase database = this.getWritableDatabase();
 
         database.delete("states", "recording = 0 AND timestamp <= ?", new String[] { String.valueOf(timestamp) });
+        database.close();
     }
 }
