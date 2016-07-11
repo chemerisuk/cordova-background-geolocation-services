@@ -29,6 +29,7 @@
         <source-file src="src/android/BackgroundLocationUploadService.java" target-dir="src/com/flybuy/cordova/location"/>
         <source-file src="src/android/Constants.java" target-dir="src/com/flybuy/cordova/location"/>
         <source-file src="src/android/StorageHelper.java" target-dir="src/com/flybuy/cordova/location"/>
+        <source-file src="src/android/LocationsProvider.java" target-dir="src/com/flybuy/cordova/location"/>
 
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
