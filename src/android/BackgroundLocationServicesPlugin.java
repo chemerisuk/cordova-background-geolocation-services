@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
@@ -279,6 +280,12 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         sharedPrefsEditor.commit();
 
         StorageHelper.getInstance(context).readyToSync();
+
+        ContentValues values = new ContentValues();
+
+        values.put("recording", false);
+
+        activity.getContentResolver().update(LocationsProvider.CONTENT_URI, values, null, null);
     }
 
     public String getApplicationName(Context context) {

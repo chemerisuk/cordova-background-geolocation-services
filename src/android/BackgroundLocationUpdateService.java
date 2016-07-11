@@ -22,6 +22,7 @@ import android.app.Service;
 import android.app.Activity;
 
 import android.content.Context;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.BroadcastReceiver;
@@ -565,6 +566,34 @@ public class BackgroundLocationUpdateService extends Service implements
 
         StorageHelper.getInstance(this).append(lastLocation, lastActivity, batteryLevel,
             isCharging, isGPSEnabled, isWifiEnabled, !isStillMode, isRecording);
+
+        ContentValues values = new ContentValues();
+
+        long timestamp;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            timestamp = lastLocation.getElapsedRealtimeNanos() / 1000000;
+        } else {
+            timestamp = lastLocation.getTime();
+        }
+
+        values.put("latitude", lastLocation.getLatitude());
+        values.put("longitude", lastLocation.getLongitude());
+        values.put("accuracy", lastLocation.getAccuracy());
+        values.put("speed", lastLocation.getSpeed());
+        values.put("heading", Math.round(lastLocation.getBearing()));
+        values.put("activity_type", Constants.getActivityString(lastActivity.getType()));
+        values.put("activity_confidence", lastActivity.getConfidence());
+        values.put("activity_moving", !isStillMode);
+        values.put("gps_enabled", isGPSEnabled);
+        values.put("wifi_enabled", isWifiEnabled);
+        values.put("battery_level", batteryLevel);
+        values.put("battery_charging", isCharging);
+        values.put("elapsed", timestamp);
+        values.put("timestamp", System.currentTimeMillis());
+        values.put("recording", isRecording);
+
+        getContentResolver().insert(LocationsProvider.CONTENT_URI, values);
     }
 
     @Override

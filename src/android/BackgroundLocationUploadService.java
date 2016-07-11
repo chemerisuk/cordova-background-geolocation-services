@@ -48,6 +48,9 @@ public class BackgroundLocationUploadService extends IntentService {
                     JSONObject lastResult = (JSONObject) results.get(results.length() - 1);
 
                     StorageHelper.getInstance(this).cleanup(lastResult.getLong("timestamp"));
+
+                    getContentResolver().delete(LocationsProvider.CONTENT_URI, "recording = 0 AND timestamp <= ?",
+                        new String[] { String.valueOf(lastResult.getLong("timestamp")) });
                 }
             } catch (IOException ex) {
                 Log.e(TAG, "- fail to send records", ex);
