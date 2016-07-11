@@ -564,9 +564,6 @@ public class BackgroundLocationUpdateService extends Service implements
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
-        StorageHelper.getInstance(this).append(lastLocation, lastActivity, batteryLevel,
-            isCharging, isGPSEnabled, isWifiEnabled, !isStillMode, isRecording);
-
         ContentValues values = new ContentValues();
 
         long timestamp;

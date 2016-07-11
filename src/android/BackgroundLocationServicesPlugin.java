@@ -156,7 +156,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) {
-        Activity activity = this.cordova.getActivity();
+        final Activity activity = this.cordova.getActivity();
         final Context context = activity.getApplicationContext();
 
         Boolean result = true;
@@ -248,7 +248,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if ("serializeTrack".equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                    JSONArray states = StorageHelper.getInstance(context).serialize(true, -1);
+                    JSONArray states = LocationsProvider.serialize(
+                        activity.getContentResolver().query(LocationsProvider.CONTENT_URI,
+                            null, "recording = ?", new String[] { "1" }, null), -1);
 
                     callbackContext.success(states);
                 }
@@ -279,7 +281,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
         sharedPrefsEditor.commit();
 
-        StorageHelper.getInstance(context).readyToSync();
+        // StorageHelper.getInstance(context).readyToSync();
 
         ContentValues values = new ContentValues();
 

@@ -27,7 +27,10 @@ public class BackgroundLocationUploadService extends IntentService {
         URL syncUrl = (URL)intent.getSerializableExtra(BackgroundLocationUploadService.URL_EXTRA);
         String deviceToken = intent.getStringExtra(BackgroundLocationUploadService.TOKEN_EXTRA);
 
-        JSONArray results = StorageHelper.getInstance(this).serialize(false, 250);
+        JSONArray results = LocationsProvider.serialize(
+            getContentResolver().query(LocationsProvider.CONTENT_URI,
+                null, "recording = ?", new String[] { "0" }, null), 250);
+
         int resultsCount = results.length();
 
         if (resultsCount > 0) {
@@ -46,8 +49,6 @@ public class BackgroundLocationUploadService extends IntentService {
 
                 if (http.getResponseCode() == 200) {
                     JSONObject lastResult = (JSONObject) results.get(results.length() - 1);
-
-                    StorageHelper.getInstance(this).cleanup(lastResult.getLong("timestamp"));
 
                     getContentResolver().delete(LocationsProvider.CONTENT_URI, "recording = 0 AND timestamp <= ?",
                         new String[] { String.valueOf(lastResult.getLong("timestamp")) });
