@@ -12,7 +12,12 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.util.Log;
 import android.net.Uri;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONException;
 
 public class LocationsProvider extends ContentProvider {
     static final String PROVIDER_NAME = "com.flybuy.cordova.location.LocationsProvider";
