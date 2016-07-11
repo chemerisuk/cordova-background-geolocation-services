@@ -20,6 +20,8 @@ import org.json.JSONObject;
 import org.json.JSONException;
 
 public class LocationsProvider extends ContentProvider {
+    private static final String TAG = "BackgroundLocationUpdateService";
+
     static final String PROVIDER_NAME = "com.flybuy.cordova.location.LocationsProvider";
     static final String URL = "content://" + PROVIDER_NAME + "/cte";
     static final Uri CONTENT_URI = Uri.parse(URL);
