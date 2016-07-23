@@ -142,6 +142,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
     private AlarmManager alarmMgr;
     private PendingIntent alarmPI;
+    private PendingIntent servicePI;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -199,6 +200,10 @@ public class BackgroundLocationUpdateService extends Service implements
         Log.i(TAG, "Received start id " + startId + ": " + intent);
 
         if (intent != null) {
+            Intent serviceIntent = new Intent(getApplicationContext(), BackgroundLocationUpdateService.class);
+            serviceIntent.putExtras(intent.getExtras());
+            servicePI = PendingIntent.getService(getApplicationContext(), 0, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
             distanceFilter = Integer.parseInt(intent.getStringExtra("distanceFilter"));
             desiredAccuracy = Integer.parseInt(intent.getStringExtra("desiredAccuracy"));
 
@@ -309,6 +314,8 @@ public class BackgroundLocationUpdateService extends Service implements
      */
     @Override
     public void onLocationChanged(Location location) {
+        restartServicePing();
+
         if (isDebugging) {
             Log.d(TAG, "- locationUpdateReceiver: " + location);
         }
@@ -357,6 +364,8 @@ public class BackgroundLocationUpdateService extends Service implements
     private BroadcastReceiver detectedActivitiesReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            restartServicePing();
+
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
 
             lastActivity = result.getMostProbableActivity();
@@ -593,11 +602,27 @@ public class BackgroundLocationUpdateService extends Service implements
         getContentResolver().insert(LocationsProvider.CONTENT_URI, values);
     }
 
+    private void restartServicePing() {
+        if (sharedPrefs.contains("##")) {
+            alarmMgr.cancel(servicePI);
+
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + interval * 5, servicePI);
+            } else {
+                alarmMgr.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + interval * 5, servicePI);
+            }
+        }
+    }
+
     @Override
     public void onDestroy() {
         Log.w(TAG, "Destroyed Location Update Service - Cleaning up");
 
         cleanUp();
+
+        if (!sharedPrefs.contains("##")) {
+            alarmMgr.cancel(servicePI);
+        }
     }
 
     private void cleanUp() {
