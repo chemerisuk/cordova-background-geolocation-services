@@ -50,7 +50,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
@@ -88,7 +87,6 @@ import java.net.URL;
 
 
 public class BackgroundLocationUpdateService extends Service implements
-        LocationListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
@@ -97,8 +95,8 @@ public class BackgroundLocationUpdateService extends Service implements
     private long lastUpdateTime = 0l;
     private Boolean fastestSpeed = false;
 
-    // private PendingIntent locationUpdatePI;
     private GoogleApiClient googleClientAPI;
+    private PendingIntent locationUpdatePI;
     private PendingIntent detectedActivitiesPI;
 
     private Integer desiredAccuracy = 100;
@@ -161,6 +159,14 @@ public class BackgroundLocationUpdateService extends Service implements
         thread.start();
 
         serviceLooper = thread.getLooper();
+
+        Intent locationUpdateIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
+        if (Build.VERSION.SDK_INT >= 16) {
+            // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
+            locationUpdateIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        }
+        locationUpdatePI = PendingIntent.getBroadcast(this, 9001, locationUpdateIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE), null, new Handler(serviceLooper));
 
         Intent detectedActivitiesIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
         if (Build.VERSION.SDK_INT >= 16) {
@@ -307,37 +313,6 @@ public class BackgroundLocationUpdateService extends Service implements
         return resId;
     }
 
-    /**
-     * Called when the location has changed.
-     *
-     * @param location
-     */
-    @Override
-    public void onLocationChanged(Location location) {
-        restartServicePing();
-
-        if (isDebugging) {
-            Log.d(TAG, "- locationUpdateReceiver: " + location);
-        }
-
-        if (location == null) {
-            return;
-        }
-
-        if (!location.hasBearing() && lastLocation != null) {
-            location.setBearing(lastLocation.bearingTo(location));
-        }
-
-        lastLocation = location;
-
-        //This is all for setting the callback for android which currently does not work
-        Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
-        localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
-        broadcastManager.sendBroadcast(localIntent);
-
-        recordState();
-    }
-
     private BroadcastReceiver startRecordingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -358,6 +333,37 @@ public class BackgroundLocationUpdateService extends Service implements
 
                 startLocationWatching();
             }
+        }
+    };
+
+    private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            LocationResult result = LocationResult.extractResult(intent);
+            Location location = result.getLastLocation();
+
+            if (isDebugging) {
+                Log.d(TAG, "- locationUpdateReceiver: " + location);
+            }
+
+            restartServicePing();
+
+            if (location == null) {
+                return;
+            }
+
+            if (!location.hasBearing() && lastLocation != null) {
+                location.setBearing(lastLocation.bearingTo(location));
+            }
+
+            lastLocation = location;
+
+            //This is all for setting the callback for android which currently does not work
+            Intent localIntent = new Intent(Constants.CALLBACK_LOCATION_UPDATE);
+            localIntent.putExtra(Constants.LOCATION_EXTRA, lastLocation);
+            broadcastManager.sendBroadcast(localIntent);
+
+            recordState();
         }
     };
 
@@ -456,7 +462,7 @@ public class BackgroundLocationUpdateService extends Service implements
             this.isWatchingLocation = true;
 
             LocationServices.FusedLocationApi.requestLocationUpdates(
-                googleClientAPI, locationRequest, this, serviceLooper);
+                googleClientAPI, locationRequest, locationUpdatePI);
 
             if(isDebugging) {
                 Log.d(TAG, "- Recorder attached - start recording location updates");
@@ -472,7 +478,7 @@ public class BackgroundLocationUpdateService extends Service implements
         if (this.isWatchingLocation && googleClientAPI != null && googleClientAPI.isConnected()) {
             //flush the location updates from the api
             LocationServices.FusedLocationApi.removeLocationUpdates(
-                googleClientAPI, this);
+                googleClientAPI, locationUpdatePI);
 
             this.isWatchingLocation = false;
 
@@ -636,6 +642,12 @@ public class BackgroundLocationUpdateService extends Service implements
         }
 
         stopForeground(true);
+
+        if (locationUpdateReceiver != null) {
+            unregisterReceiver(locationUpdateReceiver);
+
+            locationUpdateReceiver = null;
+        }
 
         if (detectedActivitiesReceiver != null) {
             unregisterReceiver(detectedActivitiesReceiver);
