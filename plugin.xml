@@ -39,6 +39,10 @@
 
 
         <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+            <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
+            <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
             <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
             <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION"/>
             <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -50,6 +54,35 @@
             <feature name="BackgroundLocationServices">
                 <param name="android-package" value="com.flybuy.cordova.location.BackgroundLocationServicesPlugin"/>
             </feature>
+        </config-file>
+
+        <!-- sync -->
+        <source-file src="src/android/sync/Authenticator.java" target-dir="src/com/flybuy/cordova/location/sync"/>
+        <source-file src="src/android/sync/AuthenticatorService.java" target-dir="src/com/flybuy/cordova/location/sync"/>
+        <source-file src="src/android/sync/SyncAdapter.java" target-dir="src/com/flybuy/cordova/location/sync"/>
+        <source-file src="src/android/sync/SyncService.java" target-dir="src/com/flybuy/cordova/location/sync"/>
+        <resource-file src="src/android/xml/authenticator.xml" target="res/xml/authenticator.xml" />
+        <resource-file src="src/android/xml/syncadapter.xml" target="res/xml/syncadapter.xml" />
+
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <service android:name="com.flybuy.cordova.location.sync.AuthenticatorService" android:enabled="true">
+                <intent-filter>
+                    <action android:name="android.accounts.AccountAuthenticator"/>
+                </intent-filter>
+                <meta-data
+                    android:name="android.accounts.AccountAuthenticator"
+                    android:resource="@xml/authenticator" />
+            </service>
+
+            <service
+                android:name="com.flybuy.cordova.location.sync.SyncService"
+                android:exported="true" android:process=":sync">
+                <intent-filter>
+                    <action android:name="android.content.SyncAdapter"/>
+                </intent-filter>
+                <meta-data android:name="android.content.SyncAdapter"
+                    android:resource="@xml/syncadapter" />
+            </service>
         </config-file>
 
     </platform>

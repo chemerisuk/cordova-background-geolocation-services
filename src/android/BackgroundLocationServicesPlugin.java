@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -20,6 +21,8 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -212,6 +215,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 this.deviceToken = data.getString(14);
                 this.stillInterval = data.getString(15);
 
+                startSync(context);
+
                 callbackContext.success();
             } catch (JSONException e) {
                 callbackContext.error("JSON Exception" + e.getMessage());
@@ -348,6 +353,36 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         return state;
     }
 
+    private void startSync(Context context) {
+        String AUTHORITY = "com.flybuy.cordova.location.LocationsProvider";
+        // Create the account type and default account
+        Account newAccount = new Account("dummyaccount", "com.flybuy.cordova");
+        // Get an instance of the Android account manager
+        AccountManager accountManager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
+        /*
+         * Add the account and account type, no password or user data
+         * If successful, return the Account object, otherwise report an error.
+         */
+        if (accountManager.addAccountExplicitly(newAccount, null, null)) {
+            /*
+             * If you don't set android:syncable="true" in
+             * in your <provider> element in the manifest,
+             * then call context.setIsSyncable(account, AUTHORITY, 1)
+             * here.
+             */
+        } else {
+            /*
+             * The account exists or some other error occurred. Log this, report it,
+             * or handle it internally.
+             */
+        }
+
+        /*
+         * Turn on periodic syncing
+         */
+        ContentResolver.addPeriodicSync(newAccount, AUTHORITY, Bundle.EMPTY,
+            Long.parseLong(this.syncInterval));
+    }
 
     /**
      * Override method in CordovaPlugin.
