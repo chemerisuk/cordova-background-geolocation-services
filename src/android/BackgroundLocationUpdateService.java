@@ -339,14 +339,17 @@ public class BackgroundLocationUpdateService extends Service implements
     private BroadcastReceiver locationUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            restartServicePing();
+
             LocationResult result = LocationResult.extractResult(intent);
+
+            if (result == null) return;
+
             Location location = result.getLastLocation();
 
             if (isDebugging) {
                 Log.d(TAG, "- locationUpdateReceiver: " + location);
             }
-
-            restartServicePing();
 
             if (location == null) {
                 return;
@@ -373,6 +376,8 @@ public class BackgroundLocationUpdateService extends Service implements
             restartServicePing();
 
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+
+            if (result == null) return;
 
             lastActivity = result.getMostProbableActivity();
 
