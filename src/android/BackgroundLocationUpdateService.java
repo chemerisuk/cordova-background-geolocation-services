@@ -160,13 +160,13 @@ public class BackgroundLocationUpdateService extends Service implements
 
         serviceLooper = thread.getLooper();
 
-        Intent locationUpdateIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
+        Intent locationUpdateIntent = new Intent(Constants.LOCATION_UPDATE);
         if (Build.VERSION.SDK_INT >= 16) {
             // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
             locationUpdateIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
         locationUpdatePI = PendingIntent.getBroadcast(this, 9001, locationUpdateIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE), null, new Handler(serviceLooper));
+        registerReceiver(locationUpdateReceiver, new IntentFilter(Constants.LOCATION_UPDATE), null, new Handler(serviceLooper));
 
         Intent detectedActivitiesIntent = new Intent(Constants.DETECTED_ACTIVITY_UPDATE);
         if (Build.VERSION.SDK_INT >= 16) {
