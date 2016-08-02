@@ -572,7 +572,12 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void recordState() {
-        if (lastLocation == null || lastActivity == null) return;
+        if (lastLocation == null) return;
+
+        if (lastActivity == null) {
+            // use OTHER activity by default
+            lastActivity = new DetectedActivity(-1, 100);
+        }
 
         Intent batteryStatus = registerReceiver(null, batteryStatusFilter);
         int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
@@ -673,8 +678,7 @@ public class BackgroundLocationUpdateService extends Service implements
         }
 
         if (locationManager != null) {
-            // use OTHER activity to remember when service stops
-            lastActivity = new DetectedActivity(-1, 100);
+            lastActivity = null;
 
             recordState();
         }
