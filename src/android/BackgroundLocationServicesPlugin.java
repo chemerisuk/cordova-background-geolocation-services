@@ -250,7 +250,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 public void run() {
                     JSONArray states = LocationsProvider.serialize(
                         activity.getContentResolver().query(LocationsProvider.CONTENT_URI,
-                            null, "recording = ?", new String[] { "1" }, null), -1);
+                            null, "recording = ?", new String[] { "1" }, null), 2000);
 
                     callbackContext.success(states);
                 }
