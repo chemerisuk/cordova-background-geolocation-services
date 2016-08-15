@@ -30,6 +30,11 @@ public class LocationsProvider extends ContentProvider {
     static final UriMatcher uriMatcher;
     private static HashMap<String, String> values;
 
+    private DatabaseHelper dbHelper;
+    static final String DATABASE_NAME = "states";
+    static final String TABLE_NAME = "states";
+    static final int DATABASE_VERSION = 1;
+
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(PROVIDER_NAME, "cte", uriCode);
@@ -37,12 +42,21 @@ public class LocationsProvider extends ContentProvider {
     }
 
     @Override
+    public boolean onCreate() {
+        dbHelper = new DatabaseHelper(getContext());
+
+        return true;
+    }
+
+    @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
         int count = 0;
 
         switch (uriMatcher.match(uri)) {
         case uriCode:
             count = db.delete(TABLE_NAME, selection, selectionArgs);
+            db.close();
             break;
         default:
             throw new IllegalArgumentException("Unknown URI " + uri);
@@ -65,7 +79,9 @@ public class LocationsProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
         long rowID = db.insert(TABLE_NAME, "", values);
+        db.close();
 
         if (rowID > 0) {
             Uri _uri = ContentUris.withAppendedId(CONTENT_URI, rowID);
@@ -74,17 +90,6 @@ public class LocationsProvider extends ContentProvider {
         }
 
         throw new SQLException("Failed to add a record into " + uri);
-    }
-
-    @Override
-    public boolean onCreate() {
-        Context context = getContext();
-        DatabaseHelper dbHelper = new DatabaseHelper(context);
-        db = dbHelper.getWritableDatabase();
-        if (db != null) {
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -105,6 +110,7 @@ public class LocationsProvider extends ContentProvider {
             sortOrder = "timestamp";
         }
 
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, sortOrder);
         c.setNotificationUri(getContext().getContentResolver(), uri);
 
@@ -114,10 +120,12 @@ public class LocationsProvider extends ContentProvider {
     @Override
     public int update(Uri uri, ContentValues values, String selection,
         String[] selectionArgs) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
         int count = 0;
         switch (uriMatcher.match(uri)) {
         case uriCode:
             count = db.update(TABLE_NAME, values, selection, selectionArgs);
+            db.close();
             break;
         default:
             throw new IllegalArgumentException("Unknown URI " + uri);
@@ -162,11 +170,6 @@ public class LocationsProvider extends ContentProvider {
 
         return results;
     }
-
-    private SQLiteDatabase db;
-    static final String DATABASE_NAME = "states";
-    static final String TABLE_NAME = "states";
-    static final int DATABASE_VERSION = 1;
 
     private static class DatabaseHelper extends SQLiteOpenHelper {
         DatabaseHelper(Context context) {
