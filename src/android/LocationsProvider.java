@@ -56,7 +56,6 @@ public class LocationsProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
         case uriCode:
             count = db.delete(TABLE_NAME, selection, selectionArgs);
-            db.close();
             break;
         default:
             throw new IllegalArgumentException("Unknown URI " + uri);
@@ -81,7 +80,6 @@ public class LocationsProvider extends ContentProvider {
     public Uri insert(Uri uri, ContentValues values) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         long rowID = db.insert(TABLE_NAME, "", values);
-        db.close();
 
         if (rowID > 0) {
             Uri _uri = ContentUris.withAppendedId(CONTENT_URI, rowID);
@@ -125,7 +123,6 @@ public class LocationsProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
         case uriCode:
             count = db.update(TABLE_NAME, values, selection, selectionArgs);
-            db.close();
             break;
         default:
             throw new IllegalArgumentException("Unknown URI " + uri);
