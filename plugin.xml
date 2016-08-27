@@ -32,7 +32,7 @@
 
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
-            <service android:name="com.flybuy.cordova.location.BackgroundLocationUpdateService" android:enabled="true" android:exported="false"/>
+            <service android:name="com.flybuy.cordova.location.BackgroundLocationUpdateService" android:enabled="true" android:exported="true"/>
             <service android:name="com.flybuy.cordova.location.BackgroundLocationUploadService" android:enabled="true" android:exported="false"/>
             <provider android:name="com.flybuy.cordova.location.LocationsProvider" android:authorities="com.flybuy.cordova.location.LocationsProvider" android:exported="false"/>
         </config-file>
