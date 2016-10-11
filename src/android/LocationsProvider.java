@@ -136,33 +136,37 @@ public class LocationsProvider extends ContentProvider {
     public static JSONArray serialize(Cursor cursor, int limit) {
         JSONArray results = new JSONArray();
 
-        if (cursor.moveToFirst()) {
-            do {
-                JSONObject state = new JSONObject();
+        try {
+            if (cursor.moveToFirst()) {
+                do {
+                    JSONObject state = new JSONObject();
 
-                try {
-                    state.put("latitude", cursor.getFloat(1));
-                    state.put("longitude", cursor.getFloat(2));
-                    state.put("accuracy", cursor.getInt(3));
-                    state.put("speed", cursor.getFloat(4));
-                    state.put("heading", cursor.getFloat(5));
-                    state.put("activity_type", cursor.getString(6));
-                    state.put("activity_confidence", cursor.getInt(7));
-                    state.put("activity_moving", cursor.getInt(8) > 0);
-                    state.put("gps_enabled", cursor.getInt(9) > 0);
-                    state.put("wifi_enabled", cursor.getInt(10) > 0);
-                    state.put("battery_level", cursor.getInt(11));
-                    state.put("battery_charging", cursor.getInt(12) > 0);
-                    state.put("elapsed", cursor.getLong(13));
-                    state.put("timestamp", cursor.getLong(14));
+                    try {
+                        state.put("latitude", cursor.getFloat(1));
+                        state.put("longitude", cursor.getFloat(2));
+                        state.put("accuracy", cursor.getInt(3));
+                        state.put("speed", cursor.getFloat(4));
+                        state.put("heading", cursor.getFloat(5));
+                        state.put("activity_type", cursor.getString(6));
+                        state.put("activity_confidence", cursor.getInt(7));
+                        state.put("activity_moving", cursor.getInt(8) > 0);
+                        state.put("gps_enabled", cursor.getInt(9) > 0);
+                        state.put("wifi_enabled", cursor.getInt(10) > 0);
+                        state.put("battery_level", cursor.getInt(11));
+                        state.put("battery_charging", cursor.getInt(12) > 0);
+                        state.put("elapsed", cursor.getLong(13));
+                        state.put("timestamp", cursor.getLong(14));
 
-                    results.put(state);
-                } catch (JSONException ex) {
-                    Log.d(TAG, "- Fail to serialize record", ex);
-                }
+                        results.put(state);
+                    } catch (JSONException ex) {
+                        Log.d(TAG, "- Fail to serialize record", ex);
+                    }
 
-                if (limit > 0 && results.length() >= limit) break;
-            } while (cursor.moveToNext());
+                    if (limit > 0 && results.length() >= limit) break;
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            cursor.close();
         }
 
         return results;
