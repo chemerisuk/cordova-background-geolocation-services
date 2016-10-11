@@ -109,7 +109,7 @@ public class LocationsProvider extends ContentProvider {
         }
 
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, sortOrder);
+        Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, sortOrder, "2000");
         c.setNotificationUri(getContext().getContentResolver(), uri);
 
         return c;
