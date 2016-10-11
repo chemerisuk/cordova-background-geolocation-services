@@ -333,6 +333,10 @@ public class BackgroundLocationUpdateService extends Service implements
 
                 startLocationWatching();
             }
+            // close DB connection to force db to create the file
+            getContentResolver()
+                .acquireContentProviderClient(LocationsProvider.CONTENT_URI)
+                .release();
         }
     };
 
