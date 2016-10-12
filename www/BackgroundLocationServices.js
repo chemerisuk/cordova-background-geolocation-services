@@ -25,7 +25,7 @@ module.exports = {
              failure || function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, stillInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, sleepInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {
