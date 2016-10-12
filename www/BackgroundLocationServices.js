@@ -7,9 +7,9 @@ module.exports = {
         var distanceFilter      = (config.distanceFilter   >= 0) ? config.distanceFilter   : 500, // meters
             desiredAccuracy     = (config.desiredAccuracy  >= 0) ? config.desiredAccuracy  : 100, // meters
             interval            = (config.interval         >= 0) ? config.interval        : 900000, // milliseconds
-            stillInterval       = (config.stillInterval    >= 0) ? config.stillInterval : 900000,
+            stillInterval       = (config.stillInterval    >= 0) ? config.stillInterval : 0,
             fastestInterval     = (config.fastestInterval  >= 0) ? config.fastestInterval : 120000, // milliseconds
-            aggressiveInterval  = (config.aggressiveInterval > 0) ? config.aggressiveInterval : 4000, //mulliseconds
+            sleepInterval       = (config.sleepInterval    >= 0) ? config.sleepInterval : 30000, //mulliseconds
             debug               = config.debug || false,
             notificationTitle   = config.notificationTitle || "Background tracking",
             notificationText    = config.notificationText  || "ENABLED",
@@ -25,7 +25,7 @@ module.exports = {
              failure || function() {},
              'BackgroundLocationServices',
              'configure',
-             [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
+             [distanceFilter, desiredAccuracy,  interval, fastestInterval, stillInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
         );
     },
     registerForLocationUpdates : function(success, failure, config) {

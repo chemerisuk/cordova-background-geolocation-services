@@ -56,9 +56,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
     private String interval = "300000";
     private String fastestInterval = "60000";
-    private String aggressiveInterval = "4000";
     private String activitiesInterval = "0";
     private String stillInterval = "0";
+    private String sleepInterval = "0";
     private String activitiesConfidence = "75";
     private String accuracyFilter = "1000";
     private String syncUrl = "";
@@ -176,7 +176,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             updateServiceIntent.putExtra("notificationText", notificationText);
             updateServiceIntent.putExtra("interval", interval);
             updateServiceIntent.putExtra("fastestInterval", fastestInterval);
-            updateServiceIntent.putExtra("aggressiveInterval", aggressiveInterval);
+            updateServiceIntent.putExtra("sleepInterval", sleepInterval);
             updateServiceIntent.putExtra("activitiesInterval", activitiesInterval);
             updateServiceIntent.putExtra("activitiesConfidence", activitiesConfidence);
             updateServiceIntent.putExtra("syncUrl", syncUrl);
@@ -193,13 +193,13 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
             try {
-                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, aggressiveInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
+                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, sleepInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
                 //  0               1                2         3                4                   5      6                   7                8           9          10                  11                    12       13            14           15
                 this.distanceFilter = data.getString(0);
                 this.desiredAccuracy = data.getString(1);
                 this.interval = data.getString(2);
                 this.fastestInterval = data.getString(3);
-                this.aggressiveInterval = data.getString(4);
+                this.sleepInterval = data.getString(4);
                 this.isDebugging = data.getString(5);
                 this.notificationTitle = data.getString(6);
                 this.notificationText = data.getString(7);

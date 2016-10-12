@@ -109,7 +109,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
     private long  interval             = (long)  SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND * 5;
     private long  fastestInterval      = (long)  SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
-    private long  aggressiveInterval   = (long) MILLISECONDS_PER_SECOND * 4;
+    private long  sleepInterval        = 0;
     private long  stillInterval        = 0;
 
     private Location lastLocation;
@@ -214,9 +214,9 @@ public class BackgroundLocationUpdateService extends Service implements
             desiredAccuracy = Integer.parseInt(intent.getStringExtra("desiredAccuracy"));
 
             interval             = Integer.parseInt(intent.getStringExtra("interval"));
-            stillInterval        = Integer.parseInt(intent.getStringExtra("stillInterval"));
             fastestInterval      = Integer.parseInt(intent.getStringExtra("fastestInterval"));
-            aggressiveInterval   = Integer.parseInt(intent.getStringExtra("aggressiveInterval"));
+            stillInterval        = Integer.parseInt(intent.getStringExtra("stillInterval"));
+            sleepInterval        = Integer.parseInt(intent.getStringExtra("sleepInterval"));
             activitiesInterval   = Integer.parseInt(intent.getStringExtra("activitiesInterval"));
             activitiesConfidence = Integer.parseInt(intent.getStringExtra("activitiesConfidence"));
 
@@ -273,9 +273,10 @@ public class BackgroundLocationUpdateService extends Service implements
 
         // Log.i(TAG, "- url: " + url);
         // Log.i(TAG, "- params: "  + params.toString());
+        Log.i(TAG, "- fastestInterval: "      + fastestInterval);
         Log.i(TAG, "- interval: "             + interval);
         Log.i(TAG, "- stillInterval: "        + stillInterval);
-        Log.i(TAG, "- fastestInterval: "      + fastestInterval);
+        Log.i(TAG, "- sleepInterval: "        + sleepInterval);
 
         Log.i(TAG, "- distanceFilter: "     + distanceFilter);
         Log.i(TAG, "- desiredAccuracy: "    + desiredAccuracy);
@@ -400,24 +401,16 @@ public class BackgroundLocationUpdateService extends Service implements
                 if (!isStillMode) {
                     isStillMode = true;
 
-                    if (isDebugging) {
-                        Toast.makeText(context, "Detected Activity was STILL, Stop recording", Toast.LENGTH_SHORT).show();
-                    }
-
                     stopLocationWatching();
-
-                    if (stillInterval > 0 && sharedPrefs.contains("##")) {
-                        startLocationWatching();
-                    }
+                    // restart watching with increased intervals
+                    startLocationWatching();
                 }
             } else {
                 if (isStillMode) {
                     isStillMode = false;
 
-                    if (isDebugging) {
-                        Toast.makeText(context, "Detected Activity was ACTIVE, Start Recording", Toast.LENGTH_SHORT).show();
-                    }
-
+                    stopLocationWatching();
+                    // restart watching with decreased intervals
                     startLocationWatching();
                 }
             }
@@ -459,8 +452,35 @@ public class BackgroundLocationUpdateService extends Service implements
         if (googleClientAPI == null) {
             connectToPlayAPI();
         } else if (googleClientAPI.isConnected()) {
-            long currentInterval = isStillMode && stillInterval > 0 ? stillInterval : interval;
-            long currentFastestInterval = isStillMode && stillInterval > 0 ? interval : fastestInterval;
+            long currentInterval = interval;
+            long currentFastestInterval = fastestInterval;
+
+            if (!isStillMode) {
+                if (isDebugging) {
+                    Toast.makeText(getApplicationContext(),
+                        "Start location updates in NORMAL mode", Toast.LENGTH_SHORT).show();
+                }
+            } else if (sharedPrefs.contains("##")) {
+                if (stillInterval > 0) {
+                    currentInterval = stillInterval;
+                    currentFastestInterval = interval;
+
+                    if (isDebugging) {
+                        Toast.makeText(getApplicationContext(),
+                            "Start location updates in STILL mode", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+                if (sleepInterval > 0) {
+                    currentInterval = sleepInterval;
+                    currentFastestInterval = stillInterval;
+
+                    if (isDebugging) {
+                        Toast.makeText(getApplicationContext(),
+                            "Start location updates in SLEEP mode", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
 
             locationRequest = LocationRequest.create()
                     .setPriority(translateDesiredAccuracy(desiredAccuracy))
@@ -472,10 +492,6 @@ public class BackgroundLocationUpdateService extends Service implements
 
             LocationServices.FusedLocationApi.requestLocationUpdates(
                 googleClientAPI, locationRequest, locationUpdatePI);
-
-            if(isDebugging) {
-                Log.d(TAG, "- Recorder attached - start recording location updates");
-            }
         } else {
             if (this.startRecordingOnConnect) {
                 googleClientAPI.connect();
@@ -492,7 +508,8 @@ public class BackgroundLocationUpdateService extends Service implements
             this.isWatchingLocation = false;
 
             if (isDebugging) {
-                Log.w(TAG, "- Recorder detached - stop recording location updates");
+                Toast.makeText(getApplicationContext(),
+                    "Stop recording location updates", Toast.LENGTH_SHORT).show();
             }
         }
     }
