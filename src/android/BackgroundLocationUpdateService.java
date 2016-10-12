@@ -387,7 +387,7 @@ public class BackgroundLocationUpdateService extends Service implements
             lastActivity = result.getMostProbableActivity();
 
             if (isDebugging) {
-                Log.w(TAG, "MOST LIKELY ACTIVITY: " + Constants.getActivityString(lastActivity.getType()) + " " + lastActivity.getConfidence());
+                Log.d(TAG, "MOST LIKELY ACTIVITY: " + Constants.getActivityString(lastActivity.getType()) + " " + lastActivity.getConfidence());
             }
 
             Intent mIntent = new Intent(Constants.CALLBACK_ACTIVITY_UPDATE);
@@ -457,25 +457,31 @@ public class BackgroundLocationUpdateService extends Service implements
 
             if (!isStillMode) {
                 if (isDebugging) {
+                    Log.d(TAG, "Start location updates in NORMAL mode");
+
                     Toast.makeText(getApplicationContext(),
                         "Start location updates in NORMAL mode", Toast.LENGTH_SHORT).show();
                 }
             } else if (sharedPrefs.contains("##")) {
                 if (stillInterval > 0) {
-                    currentInterval = stillInterval;
-                    currentFastestInterval = interval;
+                    currentFastestInterval = stillInterval;
+                    currentInterval = stillInterval * interval / fastestInterval;
 
                     if (isDebugging) {
+                        Log.d(TAG, "Start location updates in STILL mode");
+
                         Toast.makeText(getApplicationContext(),
                             "Start location updates in STILL mode", Toast.LENGTH_SHORT).show();
                     }
                 }
             } else {
                 if (sleepInterval > 0) {
-                    currentInterval = sleepInterval;
-                    currentFastestInterval = stillInterval;
+                    currentFastestInterval = sleepInterval;
+                    currentInterval = sleepInterval * interval / fastestInterval;
 
                     if (isDebugging) {
+                        Log.d(TAG, "Start location updates in SLEEP mode");
+
                         Toast.makeText(getApplicationContext(),
                             "Start location updates in SLEEP mode", Toast.LENGTH_SHORT).show();
                     }
