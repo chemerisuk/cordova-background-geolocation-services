@@ -252,7 +252,7 @@ public class BackgroundLocationUpdateService extends Service implements
             Notification notification = builder.build();
 
             notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_NO_CLEAR;
-            notification.contentView.setImageViewResource(android.R.id.icon, getApplicationInfo().icon);
+            notification.contentView.setImageViewResource(getIconResId(), getApplicationInfo().icon);
 
             startForeground(startId, notification);
 
@@ -303,15 +303,7 @@ public class BackgroundLocationUpdateService extends Service implements
         Resources res   = context.getResources();
         String pkgName  = context.getPackageName();
 
-        int resId;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            resId = res.getIdentifier("ic_stat_notify", "drawable", pkgName);
-        } else {
-            resId = res.getIdentifier("icon", "drawable", pkgName);
-        }
-
-        return resId;
+        return res.getIdentifier("ic_stat_notify", "drawable", pkgName);
     }
 
     private BroadcastReceiver startRecordingReceiver = new BroadcastReceiver() {
