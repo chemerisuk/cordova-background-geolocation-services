@@ -224,33 +224,11 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if(ACTION_REGISTER_FOR_ACTIVITY_UPDATES.equalsIgnoreCase(action)) {
             detectedActivitiesCallback = callbackContext;
         } else if (ACTION_START_AGGRESSIVE.equalsIgnoreCase(action)) {
-            final boolean persistent = data.getBoolean(0);
-
-            cordova.getThreadPool().execute(new Runnable() {
-                public void run() {
-                    startTrackRecording(persistent);
-
-                    callbackContext.success();
-                }
-            });
+            startAggressive(data.getBoolean(0), callbackContext);
         } else if (ACTION_STOP_AGGRESSIVE.equalsIgnoreCase(action)) {
-            cordova.getThreadPool().execute(new Runnable() {
-                public void run() {
-                    stopTrackRecording();
-
-                    callbackContext.success();
-                }
-            });
+            stopAggressive(callbackContext);
         } else if (ACTION_SERIALIZE_TRACK.equalsIgnoreCase(action)) {
-            cordova.getThreadPool().execute(new Runnable() {
-                public void run() {
-                    JSONArray states = LocationsProvider.serialize(
-                        activity.getContentResolver().query(LocationsProvider.CONTENT_URI,
-                            null, "recording = ?", new String[] { "1" }, null), 0);
-
-                    callbackContext.success(states);
-                }
-            });
+            serializeTrack(callbackContext);
         } else {
             result = false;
         }
@@ -258,32 +236,56 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         return result;
     }
 
-    private void startTrackRecording(boolean persistent) {
-        if (persistent) {
-            sharedPrefsEditor.putBoolean("##", true);
-            sharedPrefsEditor.commit();
-        }
+    private void startAggressive(boolean persist, final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                if (persist) {
+                    sharedPrefsEditor.putBoolean("##", true);
+                    sharedPrefsEditor.commit();
+                }
 
-        broadcastManager.sendBroadcast(new Intent(Constants.START_RECORDING));
+                broadcastManager.sendBroadcast(new Intent(Constants.START_RECORDING));
+
+                callbackContext.success();
+            }
+        });
     }
 
-    private void stopTrackRecording() {
-        Activity activity = this.cordova.getActivity();
-        Context context = activity.getApplicationContext();
+    private void stopAggressive(final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                Activity activity = this.cordova.getActivity();
+                Context context = activity.getApplicationContext();
 
-        if (sharedPrefs.contains("##")) {
-            sharedPrefsEditor.remove("##");
-        }
+                if (sharedPrefs.contains("##")) {
+                    sharedPrefsEditor.remove("##");
+                }
 
-        sharedPrefsEditor.commit();
+                sharedPrefsEditor.commit();
 
-        // StorageHelper.getInstance(context).readyToSync();
+                // StorageHelper.getInstance(context).readyToSync();
 
-        ContentValues values = new ContentValues();
+                ContentValues values = new ContentValues();
 
-        values.put("recording", false);
+                values.put("recording", false);
 
-        activity.getContentResolver().update(LocationsProvider.CONTENT_URI, values, null, null);
+                activity.getContentResolver().update(LocationsProvider.CONTENT_URI, values, null, null);
+
+                callbackContext.success();
+            }
+        });
+    }
+
+    private void serializeTrack(final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                JSONArray states = LocationsProvider.serialize(
+                    activity.getContentResolver().query(LocationsProvider.CONTENT_URI,
+                        null, "recording = ?", new String[] { "1" }, null), 0);
+
+                callbackContext.success(states);
+            }
+        });
     }
 
     public String getApplicationName(Context context) {
