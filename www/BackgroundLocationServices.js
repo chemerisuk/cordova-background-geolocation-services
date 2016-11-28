@@ -65,18 +65,18 @@ module.exports = {
             'getVersion',
             []);
     },
-    startTrackRecording: function(persistant, success, failure) {
+    startAggressive: function(persistant, success, failure) {
         exec(success || function() {},
              failure || function() {},
              'BackgroundLocationServices',
-             'startTrackRecording',
-             [persistant == null ? true : persistant]);
+             'startAggressive',
+             [persistant]);
     },
-    stopTrackRecording: function(success, failure) {
+    stopAggressive: function(success, failure) {
         exec(success || function() {},
              failure || function() {},
              'BackgroundLocationServices',
-             'stopTrackRecording',
+             'stopAggressive',
              []);
     },
     serializeTrack: function(success, failure) {

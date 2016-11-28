@@ -309,23 +309,21 @@ public class BackgroundLocationUpdateService extends Service implements
     private BroadcastReceiver changeAggressiveReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (!isWatchingLocation) {
-                isStillMode = false;
+            isStillMode = false;
 
-                if (isDebugging) {
-                    Toast.makeText(context, "Change Aggressive", Toast.LENGTH_SHORT).show();
-                }
-
-                if (activitiesInterval > 0) {
-                    stopDetectingActivities();
-                    // sometimes activity detection freezes so restart to wakeup
-                    startDetectingActivities();
-                    // reset current activity value
-                    lastActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
-                }
-
-                startLocationWatching();
+            if (isDebugging) {
+                Toast.makeText(context, "Change Aggressive", Toast.LENGTH_SHORT).show();
             }
+
+            if (activitiesInterval > 0) {
+                stopDetectingActivities();
+                // sometimes activity detection freezes so restart to wakeup
+                startDetectingActivities();
+                // reset current activity value
+                lastActivity = new DetectedActivity(DetectedActivity.UNKNOWN, 0);
+            }
+
+            startLocationWatching();
             // close DB connection to force db to create the file
             getContentResolver()
                 .acquireContentProviderClient(LocationsProvider.CONTENT_URI)

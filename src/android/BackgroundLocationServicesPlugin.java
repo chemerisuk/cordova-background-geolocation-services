@@ -260,7 +260,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 Activity activity = this.cordova.getActivity();
                 Context context = activity.getApplicationContext();
 
-                if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG) || sharedPrefs.contains(Constants.PERSISTING_FLAG)) {
+                if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
                     sharedPrefsEditor.remove(Constants.AGGRESSIVE_FLAG);
                     sharedPrefsEditor.remove(Constants.PERSISTING_FLAG);
                     sharedPrefsEditor.commit();
