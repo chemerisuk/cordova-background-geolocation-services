@@ -43,6 +43,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     public static final String ACTION_GET_VERSION = "getVersion";
     public static final String ACTION_REGISTER_FOR_LOCATION_UPDATES = "registerForLocationUpdates";
     public static final String ACTION_REGISTER_FOR_ACTIVITY_UPDATES = "registerForActivityUpdates";
+    public static final String ACTION_START_AGGRESSIVE = "startAggressive";
+    public static final String ACTION_STOP_AGGRESSIVE = "stopAggressive";
+    public static final String ACTION_SERIALIZE_TRACK = "serializeTrack";
 
     public static String APP_NAME = "";
 
@@ -223,7 +226,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             locationUpdateCallback = callbackContext;
         } else if(ACTION_REGISTER_FOR_ACTIVITY_UPDATES.equalsIgnoreCase(action)) {
             detectedActivitiesCallback = callbackContext;
-        } else if ("startTrackRecording".equalsIgnoreCase(action)) {
+        } else if (ACTION_START_AGGRESSIVE.equalsIgnoreCase(action)) {
             try {
                 final boolean persistent = data.getBoolean(0);
 
@@ -237,7 +240,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             } catch (JSONException e) {
                 callbackContext.error("JSON Exception" + e.getMessage());
             }
-        } else if ("stopTrackRecording".equalsIgnoreCase(action)) {
+        } else if (ACTION_STOP_AGGRESSIVE.equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
                     stopTrackRecording();
@@ -245,7 +248,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                     callbackContext.success();
                 }
             });
-        } else if ("serializeTrack".equalsIgnoreCase(action)) {
+        } else if (ACTION_SERIALIZE_TRACK.equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
                     JSONArray states = LocationsProvider.serialize(
