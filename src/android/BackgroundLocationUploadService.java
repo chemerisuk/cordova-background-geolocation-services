@@ -33,7 +33,7 @@ public class BackgroundLocationUploadService extends IntentService {
 
         int resultsCount = results.length();
 
-        if (resultsCount > 0) {
+        if (resultsCount > 0 && syncUrl != null) {
             Log.d(TAG, "- Send " + resultsCount + " records to server");
 
             HttpURLConnection http = null;

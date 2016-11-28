@@ -236,7 +236,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         return result;
     }
 
-    private void startAggressive(boolean persist, final CallbackContext callbackContext) {
+    private void startAggressive(final boolean persist, final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 sharedPrefsEditor.putBoolean(Constants.AGGRESSIVE_FLAG, true);
@@ -257,7 +257,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private void stopAggressive(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                Activity activity = this.cordova.getActivity();
+                Activity activity = cordova.getActivity();
                 Context context = activity.getApplicationContext();
 
                 if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
@@ -281,6 +281,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private void serializeTrack(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
+                Activity activity = cordova.getActivity();
                 JSONArray states = LocationsProvider.serialize(
                     activity.getContentResolver().query(LocationsProvider.CONTENT_URI,
                         null, "recording = ?", new String[] { "1" }, null), 0);
