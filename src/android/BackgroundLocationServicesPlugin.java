@@ -158,14 +158,15 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
       locationManager = (LocationManager)activity.getSystemService(Context.LOCATION_SERVICE);
     }
 
-    public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) {
+    public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) throws JSONException {
         final Activity activity = this.cordova.getActivity();
         final Context context = activity.getApplicationContext();
 
         Boolean result = true;
 
         if (ACTION_START.equalsIgnoreCase(action) && !isEnabled) {
-          updateServiceIntent = new Intent(activity, BackgroundLocationUpdateService.class);
+            updateServiceIntent = new Intent(activity, BackgroundLocationUpdateService.class);
+
             if (Build.VERSION.SDK_INT >= 16) {
                 // http://stackoverflow.com/questions/17768932/service-crashing-and-restarting/18199749#18199749
                 updateServiceIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
@@ -195,30 +196,26 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
             callbackContext.success();
         } else if (ACTION_CONFIGURE.equalsIgnoreCase(action)) {
-            try {
-                // [distanceFilter, desiredAccuracy,  interval, fastestInterval, sleepInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
-                //  0               1                2         3                4                   5      6                   7                8           9          10                  11                    12       13            14           15
-                this.distanceFilter = data.getString(0);
-                this.desiredAccuracy = data.getString(1);
-                this.interval = data.getString(2);
-                this.fastestInterval = data.getString(3);
-                this.sleepInterval = data.getString(4);
-                this.isDebugging = data.getString(5);
-                this.notificationTitle = data.getString(6);
-                this.notificationText = data.getString(7);
-                this.keepAlive = data.getString(8);
-                this.keepAwake = data.getString(9);
-                this.activitiesInterval = data.getString(10);
-                this.activitiesConfidence = data.getString(11);
-                this.syncUrl = data.getString(12);
-                this.syncInterval = data.getString(13);
-                this.deviceToken = data.getString(14);
-                this.stillInterval = data.getString(15);
+            // [distanceFilter, desiredAccuracy,  interval, fastestInterval, sleepInterval, debug, notificationTitle, notificationText, keepAlive, keepAwake, activitiesInterval, activitiesConfidence, syncUrl, syncInterval, deviceToken, stillInterval]
+            //  0               1                2         3                4                   5      6                   7                8           9          10                  11                    12       13            14           15
+            this.distanceFilter = data.getString(0);
+            this.desiredAccuracy = data.getString(1);
+            this.interval = data.getString(2);
+            this.fastestInterval = data.getString(3);
+            this.sleepInterval = data.getString(4);
+            this.isDebugging = data.getString(5);
+            this.notificationTitle = data.getString(6);
+            this.notificationText = data.getString(7);
+            this.keepAlive = data.getString(8);
+            this.keepAwake = data.getString(9);
+            this.activitiesInterval = data.getString(10);
+            this.activitiesConfidence = data.getString(11);
+            this.syncUrl = data.getString(12);
+            this.syncInterval = data.getString(13);
+            this.deviceToken = data.getString(14);
+            this.stillInterval = data.getString(15);
 
-                callbackContext.success();
-            } catch (JSONException e) {
-                callbackContext.error("JSON Exception" + e.getMessage());
-            }
+            callbackContext.success();
         } else if(ACTION_GET_VERSION.equalsIgnoreCase(action)) {
             result = true;
             callbackContext.success(PLUGIN_VERSION);
@@ -227,19 +224,15 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         } else if(ACTION_REGISTER_FOR_ACTIVITY_UPDATES.equalsIgnoreCase(action)) {
             detectedActivitiesCallback = callbackContext;
         } else if (ACTION_START_AGGRESSIVE.equalsIgnoreCase(action)) {
-            try {
-                final boolean persistent = data.getBoolean(0);
+            final boolean persistent = data.getBoolean(0);
 
-                cordova.getThreadPool().execute(new Runnable() {
-                    public void run() {
-                        startTrackRecording(persistent);
+            cordova.getThreadPool().execute(new Runnable() {
+                public void run() {
+                    startTrackRecording(persistent);
 
-                        callbackContext.success();
-                    }
-                });
-            } catch (JSONException e) {
-                callbackContext.error("JSON Exception" + e.getMessage());
-            }
+                    callbackContext.success();
+                }
+            });
         } else if (ACTION_STOP_AGGRESSIVE.equalsIgnoreCase(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
