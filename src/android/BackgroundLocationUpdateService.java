@@ -604,7 +604,7 @@ public class BackgroundLocationUpdateService extends Service implements
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
         int batteryLevel = (100 * level) / scale;
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
-        boolean isRecording = sharedPrefs.contains(Constants.AGGRESSIVE_FLAG);
+        boolean isRecording = sharedPrefs.contains(Constants.PERSISTING_FLAG);
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 

@@ -239,10 +239,13 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private void startAggressive(boolean persist, final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
+                sharedPrefsEditor.putBoolean(Constants.AGGRESSIVE_FLAG, true);
+
                 if (persist) {
-                    sharedPrefsEditor.putBoolean(Constants.AGGRESSIVE_FLAG, true);
-                    sharedPrefsEditor.commit();
+                    sharedPrefsEditor.putBoolean(Constants.PERSISTING_FLAG, true);
                 }
+
+                sharedPrefsEditor.commit();
 
                 broadcastManager.sendBroadcast(new Intent(Constants.CHANGE_AGGRESSIVE));
 
@@ -257,8 +260,9 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 Activity activity = this.cordova.getActivity();
                 Context context = activity.getApplicationContext();
 
-                if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
+                if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG) || sharedPrefs.contains(Constants.PERSISTING_FLAG)) {
                     sharedPrefsEditor.remove(Constants.AGGRESSIVE_FLAG);
+                    sharedPrefsEditor.remove(Constants.PERSISTING_FLAG);
                     sharedPrefsEditor.commit();
 
                     broadcastManager.sendBroadcast(new Intent(Constants.CHANGE_AGGRESSIVE));

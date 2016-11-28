@@ -29,7 +29,8 @@ public class Constants {
 
   private static final String ConstantsTAG = "Constants";
 
-  private static final String AGGRESSIVE_FLAG = "#AGGRESSIVE_FLAG#";
+  public static final String AGGRESSIVE_FLAG = "#AGGRESSIVE_FLAG#";
+  public static final String PERSISTING_FLAG = "#PERSISTING_FLAG#";
 
 
   public static String getActivityString(int detectedActivityType) {
