@@ -177,7 +177,7 @@ public class BackgroundLocationUpdateService extends Service implements
         registerReceiver(detectedActivitiesReceiver, new IntentFilter(Constants.DETECTED_ACTIVITY_UPDATE), null, new Handler(serviceLooper));
 
         broadcastManager = LocalBroadcastManager.getInstance(this);
-        broadcastManager.registerReceiver(startRecordingReceiver, new IntentFilter(Constants.START_RECORDING));
+        broadcastManager.registerReceiver(changeAggressiveReceiver, new IntentFilter(Constants.CHANGE_AGGRESSIVE));
 
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefsEditor = sharedPrefs.edit();
@@ -306,14 +306,14 @@ public class BackgroundLocationUpdateService extends Service implements
         return res.getIdentifier("ic_stat_notify", "drawable", pkgName);
     }
 
-    private BroadcastReceiver startRecordingReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver changeAggressiveReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (!isWatchingLocation) {
                 isStillMode = false;
 
                 if (isDebugging) {
-                    Toast.makeText(context, "Start Recording", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Change Aggressive", Toast.LENGTH_SHORT).show();
                 }
 
                 if (activitiesInterval > 0) {
@@ -454,7 +454,7 @@ public class BackgroundLocationUpdateService extends Service implements
                     Toast.makeText(getApplicationContext(),
                         "Start location updates in NORMAL mode", Toast.LENGTH_SHORT).show();
                 }
-            } else if (sharedPrefs.contains("##")) {
+            } else if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
                 if (stillInterval > 0) {
                     currentFastestInterval = stillInterval;
                     currentInterval = stillInterval * interval / fastestInterval;
@@ -604,7 +604,7 @@ public class BackgroundLocationUpdateService extends Service implements
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
         int batteryLevel = (100 * level) / scale;
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
-        boolean isRecording = sharedPrefs.contains("##");
+        boolean isRecording = sharedPrefs.contains(Constants.AGGRESSIVE_FLAG);
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
@@ -638,7 +638,7 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void restartServicePing() {
-        if (sharedPrefs.contains("##")) {
+        if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
             alarmMgr.cancel(servicePI);
 
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -655,7 +655,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
         cleanUp();
 
-        if (!sharedPrefs.contains("##")) {
+        if (!sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
             alarmMgr.cancel(servicePI);
         }
     }
@@ -690,10 +690,10 @@ public class BackgroundLocationUpdateService extends Service implements
             syncAlarmReceiver = null;
         }
 
-        if (startRecordingReceiver != null) {
-            broadcastManager.unregisterReceiver(startRecordingReceiver);
+        if (changeAggressiveReceiver != null) {
+            broadcastManager.unregisterReceiver(changeAggressiveReceiver);
 
-            startRecordingReceiver = null;
+            changeAggressiveReceiver = null;
         }
 
         if (locationManager != null) {
@@ -709,7 +709,7 @@ public class BackgroundLocationUpdateService extends Service implements
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        if (!sharedPrefs.contains("##")) {
+        if (!sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
             Log.w(TAG, "Application killed from task manager - Cleaning up");
 
             stopSelf();

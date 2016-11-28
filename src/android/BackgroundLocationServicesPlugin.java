@@ -240,11 +240,11 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 if (persist) {
-                    sharedPrefsEditor.putBoolean("##", true);
+                    sharedPrefsEditor.putBoolean(Constants.AGGRESSIVE_FLAG, true);
                     sharedPrefsEditor.commit();
                 }
 
-                broadcastManager.sendBroadcast(new Intent(Constants.START_RECORDING));
+                broadcastManager.sendBroadcast(new Intent(Constants.CHANGE_AGGRESSIVE));
 
                 callbackContext.success();
             }
@@ -257,19 +257,17 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 Activity activity = this.cordova.getActivity();
                 Context context = activity.getApplicationContext();
 
-                if (sharedPrefs.contains("##")) {
-                    sharedPrefsEditor.remove("##");
+                if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
+                    sharedPrefsEditor.remove(Constants.AGGRESSIVE_FLAG);
+                    sharedPrefsEditor.commit();
+
+                    broadcastManager.sendBroadcast(new Intent(Constants.CHANGE_AGGRESSIVE));
                 }
 
-                sharedPrefsEditor.commit();
-
-                // StorageHelper.getInstance(context).readyToSync();
-
                 ContentValues values = new ContentValues();
-
                 values.put("recording", false);
-
-                activity.getContentResolver().update(LocationsProvider.CONTENT_URI, values, null, null);
+                activity.getContentResolver().update(
+                    LocationsProvider.CONTENT_URI, values, null, null);
 
                 callbackContext.success();
             }
@@ -314,7 +312,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private void unbindServiceFromWebview(Context context, Intent intent) {
         if (!isEnabled) return;
 
-        if (!sharedPrefs.contains("##")) {
+        if (!sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
             context.stopService(intent);
         }
 
