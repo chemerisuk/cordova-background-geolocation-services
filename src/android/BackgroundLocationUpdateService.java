@@ -630,6 +630,7 @@ public class BackgroundLocationUpdateService extends Service implements
         values.put("battery_charging", isCharging);
         values.put("elapsed", timestamp);
         values.put("timestamp", System.currentTimeMillis());
+        values.put("busy", isRecording);
         values.put("recording", isRecording);
 
         getContentResolver().insert(LocationsProvider.CONTENT_URI, values);

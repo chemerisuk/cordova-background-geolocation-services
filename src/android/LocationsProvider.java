@@ -33,7 +33,7 @@ public class LocationsProvider extends ContentProvider {
     private DatabaseHelper dbHelper;
     static final String DATABASE_NAME = "states";
     static final String TABLE_NAME = "states";
-    static final int DATABASE_VERSION = 1;
+    static final int DATABASE_VERSION = 2;
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -109,7 +109,7 @@ public class LocationsProvider extends ContentProvider {
         }
 
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, sortOrder, "2000");
+        Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, sortOrder, "5000");
         c.setNotificationUri(getContext().getContentResolver(), uri);
 
         return c;
@@ -145,17 +145,18 @@ public class LocationsProvider extends ContentProvider {
                         state.put("latitude", cursor.getFloat(1));
                         state.put("longitude", cursor.getFloat(2));
                         state.put("accuracy", cursor.getInt(3));
-                        state.put("speed", cursor.getFloat(4));
-                        state.put("heading", cursor.getFloat(5));
-                        state.put("activity_type", cursor.getString(6));
-                        state.put("activity_confidence", cursor.getInt(7));
-                        state.put("activity_moving", cursor.getInt(8) > 0);
-                        state.put("gps_enabled", cursor.getInt(9) > 0);
-                        state.put("wifi_enabled", cursor.getInt(10) > 0);
-                        state.put("battery_level", cursor.getInt(11));
-                        state.put("battery_charging", cursor.getInt(12) > 0);
+                        state.put("speed", cursor.getShort(4));
+                        state.put("heading", cursor.getShort(5));
+                        state.put("activity_type", cursor.getShort(6));
+                        state.put("activity_confidence", cursor.getShort(7));
+                        state.put("activity_moving", cursor.getShort(8) > 0);
+                        state.put("gps_enabled", cursor.getShort(9) > 0);
+                        state.put("wifi_enabled", cursor.getShort(10) > 0);
+                        state.put("battery_level", cursor.getShort(11));
+                        state.put("battery_charging", cursor.getShort(12) > 0);
                         state.put("elapsed", cursor.getLong(13));
                         state.put("timestamp", cursor.getLong(14));
+                        state.put("busy", cursor.getShort(15) > 0);
 
                         results.put(state);
                     } catch (JSONException ex) {
@@ -180,7 +181,7 @@ public class LocationsProvider extends ContentProvider {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL("CREATE TABLE " + TABLE_NAME +
-                " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy INTEGER, speed REAL, heading INTEGER, activity_type TEXT, activity_confidence INTEGER, activity_moving BOOLEAN, gps_enabled BOOLEAN, wifi_enabled BOOLEAN, battery_level INTEGER, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, recording BOOLEAN)");
+                " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy TINYINT, speed REAL, heading SMALLINT, activity_type TINYINT, activity_confidence TINYINT, activity_moving BOOLEAN, gps_enabled BOOLEAN, wifi_enabled BOOLEAN, battery_level TINYINT, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, busy BOOLEAN, recording BOOLEAN)");
         }
 
         @Override
