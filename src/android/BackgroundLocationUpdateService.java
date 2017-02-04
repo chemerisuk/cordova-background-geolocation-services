@@ -247,7 +247,7 @@ public class BackgroundLocationUpdateService extends Service implements
                 .setContentTitle(notificationTitle)
                 .setContentText(notificationText)
                 .setSmallIcon(getIconResId())
-                .setColor(0xFF333333);
+                .setColor(0xFFFF7E00);
 
             Notification notification = builder.build();
 
