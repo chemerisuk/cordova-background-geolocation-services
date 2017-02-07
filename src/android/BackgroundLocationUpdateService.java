@@ -603,6 +603,7 @@ public class BackgroundLocationUpdateService extends Service implements
         int batteryLevel = (100 * level) / scale;
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
         boolean isRecording = sharedPrefs.contains(Constants.PERSISTING_FLAG);
+        boolean isAggressive = sharedPrefs.contains(Constants.AGGRESSIVE_FLAG);
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
@@ -630,7 +631,15 @@ public class BackgroundLocationUpdateService extends Service implements
         values.put("battery_charging", isCharging);
         values.put("elapsed", timestamp);
         values.put("timestamp", System.currentTimeMillis());
-        values.put("busy", isRecording);
+
+        if (isRecording) {
+            values.put("status", 1);
+        } else if (isAggressive) {
+            values.put("status", 2);
+        } else {
+            values.put("status", 0);
+        }
+
         values.put("recording", isRecording);
 
         getContentResolver().insert(LocationsProvider.CONTENT_URI, values);

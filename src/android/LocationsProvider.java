@@ -33,7 +33,7 @@ public class LocationsProvider extends ContentProvider {
     private DatabaseHelper dbHelper;
     static final String DATABASE_NAME = "states";
     static final String TABLE_NAME = "states";
-    static final int DATABASE_VERSION = 2;
+    static final int DATABASE_VERSION = 3;
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -156,7 +156,7 @@ public class LocationsProvider extends ContentProvider {
                         state.put("battery_charging", cursor.getShort(12) > 0);
                         state.put("elapsed", cursor.getLong(13));
                         state.put("timestamp", cursor.getLong(14));
-                        state.put("busy", cursor.getShort(15) > 0);
+                        state.put("status", cursor.getShort(15));
 
                         results.put(state);
                     } catch (JSONException ex) {
@@ -181,7 +181,7 @@ public class LocationsProvider extends ContentProvider {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL("CREATE TABLE " + TABLE_NAME +
-                " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy TINYINT, speed REAL, heading SMALLINT, activity_type TINYINT, activity_confidence TINYINT, activity_moving BOOLEAN, gps_enabled BOOLEAN, wifi_enabled BOOLEAN, battery_level TINYINT, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, busy BOOLEAN, recording BOOLEAN)");
+                " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy TINYINT, speed REAL, heading SMALLINT, activity_type TINYINT, activity_confidence TINYINT, activity_moving BOOLEAN, gps_enabled BOOLEAN, wifi_enabled BOOLEAN, battery_level TINYINT, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, status TINYINT, recording BOOLEAN)");
         }
 
         @Override
