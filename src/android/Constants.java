@@ -32,6 +32,13 @@ public class Constants {
   public static final String AGGRESSIVE_FLAG = "#AGGRESSIVE_FLAG#";
   public static final String PERSISTING_FLAG = "#PERSISTING_FLAG#";
 
+  public static final int STILL_RECORD_FLAG = 1;
+  public static final int GPS_RECORD_FLAG = 2;
+  public static final int NETWORK_RECORD_FLAG = 4;
+  public static final int CHARGING_RECORD_FLAG = 8;
+  public static final int POWERSAVING_RECORD_FLAG = 16;
+
+
 
   public static String getActivityString(int detectedActivityType) {
       switch(detectedActivityType) {

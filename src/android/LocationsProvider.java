@@ -147,17 +147,13 @@ public class LocationsProvider extends ContentProvider {
                         state.put("accuracy", cursor.getInt(3));
                         state.put("speed", cursor.getShort(4));
                         state.put("heading", cursor.getShort(5));
-                        state.put("activity_type", cursor.getShort(6));
-                        state.put("activity_confidence", cursor.getShort(7));
-                        state.put("activity_moving", cursor.getShort(8) > 0);
-                        state.put("gps_enabled", cursor.getShort(9) > 0);
-                        state.put("wifi_enabled", cursor.getShort(10) > 0);
-                        state.put("power_saving", cursor.getShort(11) > 0);
-                        state.put("battery_level", cursor.getShort(12));
-                        state.put("battery_charging", cursor.getShort(13) > 0);
-                        state.put("elapsed", cursor.getLong(14));
-                        state.put("timestamp", cursor.getLong(15));
-                        state.put("status", cursor.getShort(16));
+                        state.put("flags", cursor.getShort(6));
+                        state.put("activity_type", cursor.getShort(7));
+                        state.put("activity_confidence", cursor.getShort(8));
+                        state.put("battery_level", cursor.getShort(9));
+                        state.put("elapsed", cursor.getLong(10));
+                        state.put("timestamp", cursor.getLong(11));
+                        state.put("status", cursor.getShort(12));
 
                         results.put(state);
                     } catch (JSONException ex) {
@@ -182,7 +178,7 @@ public class LocationsProvider extends ContentProvider {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL("CREATE TABLE " + TABLE_NAME +
-                " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy TINYINT, speed REAL, heading SMALLINT, activity_type TINYINT, activity_confidence TINYINT, activity_moving BOOLEAN, gps_enabled BOOLEAN, wifi_enabled BOOLEAN, power_saving BOOLEAN, battery_level TINYINT, battery_charging BOOLEAN, elapsed DATETIME, timestamp DATETIME, status TINYINT, recording BOOLEAN)");
+                " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy TINYINT, speed REAL, heading SMALLINT, flags TINYINT, activity_type TINYINT, activity_confidence TINYINT, battery_level TINYINT, elapsed DATETIME, timestamp DATETIME, status TINYINT, recording BOOLEAN)");
         }
 
         @Override

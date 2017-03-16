@@ -602,12 +602,28 @@ public class BackgroundLocationUpdateService extends Service implements
         int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
         int batteryLevel = (100 * level) / scale;
-        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
         boolean isRecording = sharedPrefs.contains(Constants.PERSISTING_FLAG);
         boolean isAggressive = sharedPrefs.contains(Constants.AGGRESSIVE_FLAG);
-        boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        boolean isPowerSaving = false;
+
+        int flags = isStillMode ? 1 : 0;
+
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            flags |= Constants.GPS_RECORD_FLAG;
+        }
+
+        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            flags |= Constants.NETWORK_RECORD_FLAG;
+        }
+
+        if (status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL) {
+            flags |= Constants.CHARGING_RECORD_FLAG;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (powerManager.isPowerSaveMode()) {
+                flags |= Constants.POWERSAVING_RECORD_FLAG;
+            }
+        }
 
         ContentValues values = new ContentValues();
 
@@ -619,23 +635,15 @@ public class BackgroundLocationUpdateService extends Service implements
             timestamp = lastLocation.getTime();
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            isPowerSaving = powerManager.isPowerSaveMode();
-        }
-
         values.put("latitude", lastLocation.getLatitude());
         values.put("longitude", lastLocation.getLongitude());
         values.put("accuracy", lastLocation.getAccuracy());
         values.put("speed", lastLocation.getSpeed());
         values.put("heading", Math.round(lastLocation.getBearing()));
-        values.put("activity_type", Constants.getActivityString(lastActivity.getType()));
+        values.put("flags", flags);
+        values.put("activity_type", lastActivity.getType());
         values.put("activity_confidence", lastActivity.getConfidence());
-        values.put("activity_moving", !isStillMode);
-        values.put("gps_enabled", isGPSEnabled);
-        values.put("wifi_enabled", isWifiEnabled);
-        values.put("power_saving", isPowerSaving);
         values.put("battery_level", batteryLevel);
-        values.put("battery_charging", isCharging);
         values.put("elapsed", timestamp);
         values.put("timestamp", System.currentTimeMillis());
 
