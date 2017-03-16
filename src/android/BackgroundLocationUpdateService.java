@@ -200,6 +200,8 @@ public class BackgroundLocationUpdateService extends Service implements
         registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE));
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        connectToPlayAPI();
     }
 
     @Override
@@ -440,9 +442,7 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void startLocationWatching() {
-        if (googleClientAPI == null) {
-            connectToPlayAPI();
-        } else if (googleClientAPI.isConnected()) {
+        if (googleClientAPI.isConnected()) {
             long currentInterval = interval;
             long currentFastestInterval = fastestInterval;
 
@@ -485,10 +485,10 @@ public class BackgroundLocationUpdateService extends Service implements
                     .setFastestInterval(currentFastestInterval)
                     .setSmallestDisplacement(distanceFilter);
 
-            this.isWatchingLocation = true;
-
             LocationServices.FusedLocationApi.requestLocationUpdates(
                 googleClientAPI, locationRequest, locationUpdatePI);
+
+            isWatchingLocation = true;
         } else {
             if (this.startRecordingOnConnect) {
                 googleClientAPI.connect();
@@ -497,12 +497,12 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void stopLocationWatching() {
-        if (this.isWatchingLocation && googleClientAPI != null && googleClientAPI.isConnected()) {
+        if (isWatchingLocation && googleClientAPI.isConnected()) {
             //flush the location updates from the api
             LocationServices.FusedLocationApi.removeLocationUpdates(
                 googleClientAPI, locationUpdatePI);
 
-            this.isWatchingLocation = false;
+            isWatchingLocation = false;
 
             if (isDebugging) {
                 Toast.makeText(getApplicationContext(),
@@ -512,16 +512,14 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void startDetectingActivities() {
-        if (!isDetectingActivities && googleClientAPI != null) {
+        if (!isDetectingActivities && activitiesInterval > 0) {
             if (!googleClientAPI.isConnected()) {
-                if (activitiesInterval > 0) {
-                    googleClientAPI.connect();
-                }
-            } else if (activitiesInterval > 0) {
-                isDetectingActivities = true;
-
+                googleClientAPI.connect();
+            } else {
                 ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
                     googleClientAPI, activitiesInterval, detectedActivitiesPI);
+
+                isDetectingActivities = true;
 
                 Log.d(TAG, "- Activity Listener registered with interval " + activitiesInterval);
             }
@@ -529,7 +527,7 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void stopDetectingActivities() {
-        if (isDetectingActivities && googleClientAPI != null && googleClientAPI.isConnected()) {
+        if (isDetectingActivities && googleClientAPI.isConnected()) {
             ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(
                 googleClientAPI, detectedActivitiesPI);
 
