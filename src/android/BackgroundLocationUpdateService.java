@@ -134,6 +134,7 @@ public class BackgroundLocationUpdateService extends Service implements
     private LocationRequest locationRequest;
     private volatile Looper serviceLooper;
 
+    private PowerManager powerManager;
     private SharedPreferences sharedPrefs;
     private SharedPreferences.Editor sharedPrefsEditor;
     private LocalBroadcastManager broadcastManager;
@@ -182,7 +183,7 @@ public class BackgroundLocationUpdateService extends Service implements
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefsEditor = sharedPrefs.edit();
 
-        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         wakeLock.acquire();
 
@@ -606,6 +607,7 @@ public class BackgroundLocationUpdateService extends Service implements
         boolean isAggressive = sharedPrefs.contains(Constants.AGGRESSIVE_FLAG);
         boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isWifiEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        boolean isPowerSaving = false;
 
         ContentValues values = new ContentValues();
 
@@ -615,6 +617,10 @@ public class BackgroundLocationUpdateService extends Service implements
             timestamp = lastLocation.getElapsedRealtimeNanos() / 1000000;
         } else {
             timestamp = lastLocation.getTime();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            isPowerSaving = powerManager.isPowerSaveMode();
         }
 
         values.put("latitude", lastLocation.getLatitude());
@@ -627,6 +633,7 @@ public class BackgroundLocationUpdateService extends Service implements
         values.put("activity_moving", !isStillMode);
         values.put("gps_enabled", isGPSEnabled);
         values.put("wifi_enabled", isWifiEnabled);
+        values.put("power_saving", isPowerSaving);
         values.put("battery_level", batteryLevel);
         values.put("battery_charging", isCharging);
         values.put("elapsed", timestamp);

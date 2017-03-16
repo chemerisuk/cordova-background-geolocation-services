@@ -18,6 +18,7 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -79,6 +80,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private CallbackContext locationUpdateCallback = null;
     private CallbackContext detectedActivitiesCallback = null;
 
+    private PowerManager powerManager;
     private LocationManager locationManager;
     private LocalBroadcastManager broadcastManager;
     private SharedPreferences sharedPrefs;
@@ -125,11 +127,17 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
                     Location location = intent.getParcelableExtra(Constants.LOCATION_EXTRA);
-                    boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-                    boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
                     if (location != null) {
-                        JSONObject state = locationToJSON(location, isGPSEnabled, isNetworkEnabled);
+                        boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                        boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+                        boolean isPowerSaving = false;
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            isPowerSaving = powerManager.isPowerSaveMode();
+                        }
+
+                        JSONObject state = locationToJSON(location, isGPSEnabled, isNetworkEnabled, isPowerSaving);
                         PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, state);
                         pluginResult.setKeepCallback(true);
                         locationUpdateCallback.sendPluginResult(pluginResult);
@@ -156,6 +164,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
       broadcastManager = LocalBroadcastManager.getInstance(activity.getApplicationContext());
 
       locationManager = (LocationManager)activity.getSystemService(Context.LOCATION_SERVICE);
+      powerManager = (PowerManager)activity.getSystemService(Context.POWER_SERVICE);
     }
 
     public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) throws JSONException {
@@ -327,7 +336,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
         isEnabled = false;
     }
 
-    private JSONObject locationToJSON(Location location, boolean isGPSEnabled, boolean isNetworkEnabled) {
+    private JSONObject locationToJSON(Location location, boolean isGPSEnabled, boolean isNetworkEnabled, boolean isPowerSaving) {
         JSONObject state = new JSONObject();
 
         try {
@@ -340,6 +349,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
             state.put("heading", location.getBearing());
             state.put("gps_enabled", isGPSEnabled);
             state.put("network_enabled", isNetworkEnabled);
+            state.put("power_saving", isPowerSaving);
         } catch(JSONException e) {
             Log.d(TAG, "ERROR CREATING JSON" + e);
         }
