@@ -154,7 +154,10 @@ public class BackgroundLocationUpdateService extends Service implements
     @Override
     public void onCreate() {
         super.onCreate();
+
         Log.i(TAG, "OnCreate");
+
+        connectToPlayAPI();
 
         HandlerThread thread = new HandlerThread("HandlerThread[" + TAG + "#1]");
         thread.start();
@@ -200,8 +203,6 @@ public class BackgroundLocationUpdateService extends Service implements
         registerReceiver(syncAlarmReceiver, new IntentFilter(Constants.SYNC_ALARM_UPDATE));
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-        connectToPlayAPI();
     }
 
     @Override
@@ -426,7 +427,7 @@ public class BackgroundLocationUpdateService extends Service implements
         }
     };
 
-    protected synchronized void connectToPlayAPI() {
+    private void connectToPlayAPI() {
         if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
             googleClientAPI = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
@@ -442,6 +443,8 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void startLocationWatching() {
+        if (googleClientAPI == null) return;
+
         if (googleClientAPI.isConnected()) {
             long currentInterval = interval;
             long currentFastestInterval = fastestInterval;
@@ -497,6 +500,8 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void stopLocationWatching() {
+        if (googleClientAPI == null) return;
+
         if (isWatchingLocation && googleClientAPI.isConnected()) {
             //flush the location updates from the api
             LocationServices.FusedLocationApi.removeLocationUpdates(
@@ -512,6 +517,8 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void startDetectingActivities() {
+        if (googleClientAPI == null) return;
+
         if (!isDetectingActivities && activitiesInterval > 0) {
             if (!googleClientAPI.isConnected()) {
                 googleClientAPI.connect();
@@ -527,6 +534,8 @@ public class BackgroundLocationUpdateService extends Service implements
     }
 
     private void stopDetectingActivities() {
+        if (googleClientAPI == null) return;
+
         if (isDetectingActivities && googleClientAPI.isConnected()) {
             ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(
                 googleClientAPI, detectedActivitiesPI);
