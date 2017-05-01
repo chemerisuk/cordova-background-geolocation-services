@@ -57,6 +57,7 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     private String desiredAccuracy = "1000";
 
     private Intent updateServiceIntent;
+    private Intent changeAggressiveIntent;
 
     private String interval = "300000";
     private String fastestInterval = "60000";
@@ -165,6 +166,8 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
 
       locationManager = (LocationManager)activity.getSystemService(Context.LOCATION_SERVICE);
       powerManager = (PowerManager)activity.getSystemService(Context.POWER_SERVICE);
+
+      changeAggressiveIntent = new Intent(Constants.CHANGE_AGGRESSIVE);
     }
 
     public boolean execute(String action, JSONArray data, final CallbackContext callbackContext) throws JSONException {
@@ -246,45 +249,40 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
     }
 
     private void startAggressive(final boolean persist, final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(new Runnable() {
-            public void run() {
-                sharedPrefsEditor.putBoolean(Constants.AGGRESSIVE_FLAG, true);
+        sharedPrefsEditor.putBoolean(Constants.AGGRESSIVE_FLAG, true);
 
-                if (persist) {
-                    sharedPrefsEditor.putBoolean(Constants.PERSISTING_FLAG, true);
-                }
+        if (persist) {
+            sharedPrefsEditor.putBoolean(Constants.PERSISTING_FLAG, true);
+        }
 
-                sharedPrefsEditor.commit();
+        sharedPrefsEditor.commit();
 
-                broadcastManager.sendBroadcast(new Intent(Constants.CHANGE_AGGRESSIVE));
+        broadcastManager.sendBroadcast(changeAggressiveIntent);
 
-                callbackContext.success();
-            }
-        });
+        callbackContext.success();
     }
 
     private void stopAggressive(final CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 Activity activity = cordova.getActivity();
-                Context context = activity.getApplicationContext();
-
-                if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
-                    sharedPrefsEditor.remove(Constants.AGGRESSIVE_FLAG);
-                    sharedPrefsEditor.remove(Constants.PERSISTING_FLAG);
-                    sharedPrefsEditor.commit();
-
-                    broadcastManager.sendBroadcast(new Intent(Constants.CHANGE_AGGRESSIVE));
-                }
-
                 ContentValues values = new ContentValues();
                 values.put("recording", false);
+
                 activity.getContentResolver().update(
                     LocationsProvider.CONTENT_URI, values, null, null);
 
                 callbackContext.success();
             }
         });
+
+        if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
+            sharedPrefsEditor.remove(Constants.AGGRESSIVE_FLAG);
+            sharedPrefsEditor.remove(Constants.PERSISTING_FLAG);
+            sharedPrefsEditor.commit();
+
+            broadcastManager.sendBroadcast(changeAggressiveIntent);
+        }
     }
 
     private void serializeTrack(final CallbackContext callbackContext) {
@@ -298,6 +296,14 @@ public class BackgroundLocationServicesPlugin extends CordovaPlugin {
                 callbackContext.success(states);
             }
         });
+
+        if (sharedPrefs.contains(Constants.AGGRESSIVE_FLAG)) {
+            sharedPrefsEditor.remove(Constants.AGGRESSIVE_FLAG);
+            sharedPrefsEditor.remove(Constants.PERSISTING_FLAG);
+            sharedPrefsEditor.commit();
+
+            broadcastManager.sendBroadcast(changeAggressiveIntent);
+        }
     }
 
     public String getApplicationName(Context context) {
