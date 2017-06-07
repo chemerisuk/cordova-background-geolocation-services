@@ -37,7 +37,7 @@ public class Constants {
   public static final int NETWORK_RECORD_FLAG = 4;
   public static final int CHARGING_RECORD_FLAG = 8;
   public static final int POWERSAVING_RECORD_FLAG = 16;
-
+  public static final int MOCKED_RECORD_FLAG = 32;
 
 
   public static String getActivityString(int detectedActivityType) {

@@ -116,17 +116,16 @@ public class BackgroundLocationUpdateService extends Service implements
     private DetectedActivity lastActivity;
     private IntentFilter batteryStatusFilter;
 
-    private Boolean isDebugging;
     private String notificationTitle = "Background checking";
     private String notificationText = "ENABLED";
     private WakeLock wakeLock;
     private URL syncUrl;
     private int syncInterval;
     private String deviceToken;
-    private boolean preventSleepWhenRecording = true;
 
-    private Boolean isDetectingActivities = false;
-    private Boolean isWatchingLocation = false;
+    private boolean isDebugging = false;
+    private boolean isDetectingActivities = false;
+    private boolean isWatchingLocation = false;
     private boolean isStillMode = false;
     private boolean startRecordingOnConnect = true;
 
@@ -357,6 +356,12 @@ public class BackgroundLocationUpdateService extends Service implements
             if (!location.hasBearing() && lastLocation != null) {
                 location.setBearing(lastLocation.bearingTo(location));
             }
+
+            // if (!location.hasSpeed() && lastLocation != null) {
+            //     float delta = (float)(location.getTime() - lastLocation.getTime());
+
+            //     location.setSpeed(1000f * location.distanceTo(lastLocation) / delta);
+            // }
 
             lastLocation = location;
 
@@ -629,6 +634,12 @@ public class BackgroundLocationUpdateService extends Service implements
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (powerManager.isPowerSaveMode()) {
                 flags |= Constants.POWERSAVING_RECORD_FLAG;
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (lastLocation.isFromMockProvider()) {
+                flags |= Constants.MOCKED_RECORD_FLAG;
             }
         }
 

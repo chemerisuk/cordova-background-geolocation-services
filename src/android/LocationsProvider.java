@@ -33,7 +33,7 @@ public class LocationsProvider extends ContentProvider {
     private DatabaseHelper dbHelper;
     static final String DATABASE_NAME = "states";
     static final String TABLE_NAME = "states";
-    static final int DATABASE_VERSION = 4;
+    static final int DATABASE_VERSION = 5;
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -144,10 +144,10 @@ public class LocationsProvider extends ContentProvider {
                     try {
                         state.put("latitude", cursor.getFloat(1));
                         state.put("longitude", cursor.getFloat(2));
-                        state.put("accuracy", cursor.getInt(3));
+                        state.put("accuracy", cursor.getShort(3));
                         state.put("speed", cursor.getShort(4));
                         state.put("heading", cursor.getShort(5));
-                        state.put("flags", cursor.getShort(6));
+                        state.put("flags", cursor.getInt(6));
                         state.put("activity_type", cursor.getShort(7));
                         state.put("activity_confidence", cursor.getShort(8));
                         state.put("battery_level", cursor.getShort(9));
@@ -178,7 +178,7 @@ public class LocationsProvider extends ContentProvider {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL("CREATE TABLE " + TABLE_NAME +
-                " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy TINYINT, speed REAL, heading SMALLINT, flags TINYINT, activity_type TINYINT, activity_confidence TINYINT, battery_level TINYINT, elapsed DATETIME, timestamp DATETIME, status TINYINT, recording BOOLEAN)");
+                " (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, latitude REAL, longitude REAL, accuracy TINYINT, speed REAL, heading SMALLINT, flags INTEGER, activity_type TINYINT, activity_confidence TINYINT, battery_level TINYINT, elapsed DATETIME, timestamp DATETIME, status TINYINT, recording BOOLEAN)");
         }
 
         @Override
