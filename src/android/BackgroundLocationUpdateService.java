@@ -55,6 +55,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderApi;
+import com.google.android.gms.location.LocationAvailability;
 
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
@@ -640,6 +641,15 @@ public class BackgroundLocationUpdateService extends Service implements
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             if (lastLocation.isFromMockProvider()) {
                 flags |= Constants.MOCKED_RECORD_FLAG;
+            }
+        }
+
+        if (googleClientAPI != null && googleClientAPI.isConnected()) {
+            LocationAvailability locationAvailability = LocationServices
+                .FusedLocationApi.getLocationAvailability(googleClientAPI);
+
+            if (!locationAvailability.isLocationAvailable()) {
+                flags |= Constants.UNAVAILABLE_RECORD_FLAG;
             }
         }
 
