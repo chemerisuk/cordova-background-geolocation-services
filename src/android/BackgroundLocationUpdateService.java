@@ -648,7 +648,7 @@ public class BackgroundLocationUpdateService extends Service implements
             LocationAvailability locationAvailability = LocationServices
                 .FusedLocationApi.getLocationAvailability(googleClientAPI);
 
-            if (!locationAvailability.isLocationAvailable()) {
+            if (locationAvailability != null && !locationAvailability.isLocationAvailable()) {
                 flags |= Constants.UNAVAILABLE_RECORD_FLAG;
             }
         }
